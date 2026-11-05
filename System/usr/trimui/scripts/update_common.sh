@@ -85,8 +85,6 @@ enable_wifi() {
     fi
 }
 check_filesystem() {
-    echo -e "\n${BLUE}================== CHECKDISK ==================${NC}\n"
-
     force=0
     if [ "$1" = "--force" ]; then
         force=1
@@ -98,6 +96,14 @@ check_filesystem() {
     if [ "$force" -eq 0 ] && [ "$last_fsck_date" = "$current_date" ]; then
         echo -e "The last fsck was performed today ($current_date).\nNo need to rerun."
     else
+        HUD_IMG="/mnt/SDCARD/System/usr/trimui/res/checkdisk_bg.png"
+        HUD_PID=""
+        if [ -f "$HUD_IMG" ] && [ -x "/mnt/SDCARD/System/bin/sdl2imgshow" ]; then
+            /mnt/SDCARD/System/bin/sdl2imgshow -i "$HUD_IMG" &
+            HUD_PID=$!
+        fi
+
+        echo -e "\n${BLUE}================== CHECKDISK ==================${NC}\n"
         echo -ne "\n" \
             "Please wait during FAT file system integrity check.\n" \
             "Issues should be fixed automatically.\n" \
@@ -106,6 +112,11 @@ check_filesystem() {
 
         mount_point=$(mount | grep -m 1 '/mnt/SDCARD' | awk '{print $1}')
         /mnt/SDCARD/System/bin/fsck.fat -a "$mount_point" 2>&1 | awk 'NR > 3'
+
+        if [ -n "$HUD_PID" ]; then
+            kill "$HUD_PID" 2>/dev/null
+            pkill -f "sdl2imgshow.*checkdisk_bg.png" 2>/dev/null
+        fi
 
         echo "$current_date" >/mnt/SDCARD/System/updates/last_fsck.txt
 
@@ -215,10 +226,25 @@ download_file() {
     # Temporary file name
     local temp_file="${destination_file}_tmp"
 
+    # Display high-tech Obsidian Cyber-Diagnostic OTA Update HUD
+    local ota_bg="/mnt/SDCARD/System/usr/trimui/res/ota_update_bg.png"
+    local dl_pid=""
+    if [ -f "$ota_bg" ] && [ -x "/mnt/SDCARD/System/bin/sdl2imgshow" ]; then
+        /mnt/SDCARD/System/bin/sdl2imgshow -i "$ota_bg" &
+        dl_pid=$!
+    fi
+
     # Download the file
     echo -e "\n${BLUE}==== Downloading: $display_name ====${NC}"
     wget --no-check-certificate --quiet --show-progress -O "$temp_file" "$url"
-    if [ $? -eq 0 ] && [ -f "$temp_file" ]; then
+    local wget_code=$?
+
+    if [ -n "$dl_pid" ]; then
+        kill "$dl_pid" 2>/dev/null
+        pkill -f "sdl2imgshow.*ota_update_bg.png" 2>/dev/null
+    fi
+
+    if [ $wget_code -eq 0 ] && [ -f "$temp_file" ]; then
         mv "$temp_file" "$destination_file"
         sync
         echo -e "$display_name: ${GREEN}OK${NC}\n"

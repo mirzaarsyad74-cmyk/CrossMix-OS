@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>CrossMix-OS // Performance &amp; Battery Quick Overlay</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "tertiary": "#b9e3ff",
+            "surface": "#0e141b",
+            "on-tertiary": "#00344b",
+            "on-primary-fixed": "#001f28",
+            "surface-container-highest": "#2f353d",
+            "tertiary-fixed-dim": "#80cfff",
+            "on-background": "#dde3ed",
+            "on-secondary-fixed-variant": "#005236",
+            "on-secondary-fixed": "#002113",
+            "surface-bright": "#343a42",
+            "primary-container": "#00d2ff",
+            "tertiary-container": "#70cbff",
+            "on-tertiary-fixed-variant": "#004c6b",
+            "surface-container-high": "#252a32",
+            "on-error-container": "#ffdad6",
+            "primary-fixed": "#b6ebff",
+            "on-surface": "#dde3ed",
+            "background": "#0e141b",
+            "surface-variant": "#2f353d",
+            "error-container": "#93000a",
+            "surface-tint": "#47d6ff",
+            "on-secondary-container": "#00311f",
+            "secondary-fixed-dim": "#4edea3",
+            "primary-fixed-dim": "#47d6ff",
+            "surface-container-low": "#161c23",
+            "inverse-on-surface": "#2b3139",
+            "secondary-fixed": "#6ffbbe",
+            "on-tertiary-fixed": "#001e2d",
+            "on-tertiary-container": "#005576",
+            "surface-container-lowest": "#090f16",
+            "inverse-surface": "#dde3ed",
+            "primary": "#a5e7ff",
+            "outline-variant": "#3c494e",
+            "on-secondary": "#003824",
+            "on-primary-container": "#00566a",
+            "secondary-container": "#00a572",
+            "on-primary-fixed-variant": "#004e60",
+            "inverse-primary": "#00677f",
+            "secondary": "#4edea3",
+            "on-surface-variant": "#bbc9cf",
+            "outline": "#859399",
+            "surface-dim": "#0e141b",
+            "on-error": "#690005",
+            "tertiary-fixed": "#c5e7ff",
+            "on-primary": "#003543",
+            "error": "#ffb4ab",
+            "surface-container": "#1a2027"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.125rem",
+            "lg": "0.25rem",
+            "xl": "0.5rem",
+            "full": "0.75rem"
+          },
+          "spacing": {
+            "space-xl": "1.75rem",
+            "space-xs": "0.25rem",
+            "space-md": "0.75rem",
+            "margin": "1rem",
+            "space-sm": "0.5rem",
+            "space-lg": "1.25rem",
+            "gutter": "0.75rem"
+          },
+          "fontFamily": {
+            "code-telemetry": ["JetBrains Mono"],
+            "headline-xl": ["Inter"],
+            "body-sm": ["Inter"],
+            "label-sm": ["JetBrains Mono"],
+            "body-lg": ["Inter"],
+            "headline-lg": ["Inter"],
+            "headline-md": ["Inter"],
+            "label-md": ["JetBrains Mono"],
+            "label-lg": ["JetBrains Mono"],
+            "body-md": ["Inter"]
+          },
+          "fontSize": {
+            "code-telemetry": ["18px", {"lineHeight": "22px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+            "headline-xl": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+            "body-sm": ["12px", {"lineHeight": "16px", "fontWeight": "400"}],
+            "label-sm": ["11px", {"lineHeight": "14px", "letterSpacing": "0.08em", "fontWeight": "500"}],
+            "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+            "headline-lg": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+            "headline-md": ["20px", {"lineHeight": "28px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+            "label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.06em", "fontWeight": "500"}],
+            "label-lg": ["14px", {"lineHeight": "20px", "letterSpacing": "0.04em", "fontWeight": "600"}],
+            "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      display: inline-block;
+      vertical-align: middle;
+      line-height: 1;
+    }
+    /* Custom scanline and microdot HUD aesthetics */
+    .bg-microgrid {
+      background-image: radial-gradient(rgba(0, 210, 255, 0.08) 1px, transparent 1px);
+      background-size: 16px 16px;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 4px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: rgba(14, 20, 27, 0.6);
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: rgba(0, 210, 255, 0.25);
+      border-radius: 4px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+      background: rgba(0, 210, 255, 0.5);
+    }
+  </style>
+</head>
+<body class="bg-surface-container-lowest text-on-surface select-none overflow-hidden antialiased font-body-md h-screen w-screen relative">
+<!-- ========================================================================= -->
+<!-- BACKGROUND LAYER: FROSTED & DIMMED CROSSMIX-OS STEAM EDITION DASHBOARD     -->
+<!-- ========================================================================= -->
+<div class="absolute inset-0 w-full h-full overflow-hidden filter blur-[6px] brightness-50 contrast-125 scale-[1.02] pointer-events-none transition-all duration-300">
+<!-- Top System Bar Mockup -->
+<header class="w-full h-10 bg-surface-container-low/80 backdrop-blur-md px-6 flex justify-between items-center border-b border-outline-variant/30 z-10">
+<div class="flex items-center gap-4">
+<span class="text-label-lg font-label-lg tracking-wider text-primary font-bold">CROSSMIX-OS // STEAM EDITION</span>
+<div class="flex items-center gap-4 text-label-sm font-label-sm text-on-surface-variant">
+<span class="text-primary font-bold">GAMES // STEAM</span>
+<span>PORTS</span>
+<span>APPS &amp; TOOLS</span>
+<span>SYSTEM SETTINGS</span>
+</div>
+</div>
+<div class="flex items-center gap-4 font-code-telemetry text-label-sm text-primary">
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-[16px]">thermostat</span> 48°C</span>
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-[16px]">wifi</span> 5GHz</span>
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-[16px]">battery_charging_full</span> 86%</span>
+<span class="text-on-surface">19:42</span>
+</div>
+</header>
+<!-- Simulated Steam Big Picture Canvas -->
+<main class="p-8 max-w-7xl mx-auto space-y-6">
+<!-- Hero Banner -->
+<div class="relative h-64 rounded-xl overflow-hidden border border-outline-variant/40 bg-surface-container shadow-2xl flex items-end p-8">
+<img class="absolute inset-0 w-full h-full object-cover opacity-60" data-alt="Futuristic cybernetic mech cockpit with high-tech HUD holo-displays, neon blue and emerald wireframe tactical graphics, sleek carbon fiber frame, volumetric ambient shadows, high visual fidelity gaming hero banner." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCP9uLnTH1Gh6xad4mjKAN_mKzwUlmw-uCq_8AogZ-i5dgUotJVupvJSmdxFchX4RewvEKMgMngjP1my_WMaQgicQE6Dnb69RtTFdt_2BjmU_gPMN04oqUZCPahbYZch715NWbzc0PnEqHuoFQOpJJIN594xgibYMg5O0mvu_sbhUyvCHbt6L2VoGpMKydkEAqeJZrS0QFJfzg35Z_d27dE6x3mxSIL8xCiQLFt6heKscsdfe3-wAuV4CKxCRV-bkqlOh2FDzb-K-oA"/>
+<div class="absolute inset-0 bg-gradient-to-t from-surface via-surface/40 to-transparent"></div>
+<div class="relative z-10 space-y-2">
+<div class="inline-flex items-center gap-2 px-2.5 py-1 rounded bg-primary-container/20 border border-primary/40 text-primary text-label-sm font-label-sm">
+<span class="w-2 h-2 rounded-full bg-secondary animate-pulse"></span>
+            RUNNING SESSION: PROTON-GE 9.1
+          </div>
+<h1 class="text-headline-xl font-headline-xl text-on-surface tracking-tight font-extrabold">CYBERPUNK 2077 // PHANTOM LIBERTY</h1>
+<p class="text-body-sm font-body-sm text-on-surface-variant">Vulkan Pipeline Pre-cached • Deck Verified (Gold Grade Tier) • 58.4 FPS Mean</p>
+</div>
+</div>
+<!-- Carousel Cards Grid -->
+<div class="grid grid-cols-4 gap-6">
+<div class="h-44 rounded-xl bg-surface-container-high border border-outline-variant/30 p-4 flex flex-col justify-end relative overflow-hidden">
+<img class="absolute inset-0 w-full h-full object-cover opacity-40" data-alt="Stylized neon sci-fi racing vehicle drifting along an elevated rain-soaked highway at midnight, reflections of holographic billboards in cyber cyan and deep magenta, high contrast dynamic gaming card." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCCfUflQ-v22mX7DxuEpwWSjxUwFHMLk7k8wz-LLciouIoJsRiLaINcD3B0LGOxAVTaTbbtRhJ8SoznDM2LuCdgy86V6y5A4T366hKfk8rI9Ln8GqsJrKqtVqChTLg9nDosXFO_PlM-rQ3K6WMuUKxXJFoxvly6uokiBvLSYAenOTFSdxxpYZnl5oNcsWCiwxfuEcThGQowaXL24438bqHCmHwbgPi4HKrsnoVN1Vx2gAGeKpOkArgpZrMN6dSBo4eLd7LYEARcMiqg"/>
+<div class="relative z-10 font-label-lg text-on-surface">PACIFIC DRIVE</div>
+<div class="relative z-10 text-label-sm text-on-surface-variant font-code-telemetry">12.4 GB // Installed</div>
+</div>
+<div class="h-44 rounded-xl bg-surface-container-high border border-outline-variant/30 p-4 flex flex-col justify-end relative overflow-hidden">
+<img class="absolute inset-0 w-full h-full object-cover opacity-40" data-alt="Grimdark space marine armored warrior standing beneath a cathedral arch on an alien planetary outpost, dramatic neon rim lighting, high fidelity dark gothic aesthetic video game thumbnail." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDnbHTFkPMZmQNc1DS7r9wxkbvO4vLyfYJE1AY5QL5Kf6to00RFT0lIYA8PmK_f059bIvJmQqfOnQPF8CQ-xq3ngY0UnWUghhPaeyjLRijbQOJ1yPoUTkMiCKF_Kh7U40NJAcRvcYd7kKop7VbpRWixNFRgnGSV0M9TZCCGWhdXpltXaiJvbJXBmX-DKHQ7Dnx_mg712Kd7uiw_03ZEPLGnwOCjsCBMp-9c_IyOH3ildLPd1geSMUf-7phBpRKIPs6dNbNwIhiGM8mi"/>
+<div class="relative z-10 font-label-lg text-on-surface">WARHAMMER 40K: SPACE MARINE 2</div>
+<div class="relative z-10 text-label-sm text-on-surface-variant font-code-telemetry">54.1 GB // Cloud Sync</div>
+</div>
+<div class="h-44 rounded-xl bg-surface-container-high border border-outline-variant/30 p-4 flex flex-col justify-end relative overflow-hidden">
+<img class="absolute inset-0 w-full h-full object-cover opacity-40" data-alt="Retro 16-bit futuristic cyberpunk pixel art metropolis street under heavy purple rain with neon signage and hovering speeders, deep blacks and vivid glowing wires handheld UI preview." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCyY99-aotWtYR1KhTrxwRVK7khpfLs6Q3ZPRb98CSzsW5DoUtbY_2a_Q5G-Cy_BNa2ofQ60l5xT8WLB3BSFBoxN0P-H50LAzq61M2SoEod9VcgMzIp9i6MIHbq3ThuXEZuulFmv2ZSxqPquDAFJWCKLPQ6R-Z9HyUuWcUwPzK3TCvziWm3nXnlk80FNMaA0bHBkRK8Y9c1EvJwiE4h8Z8FqB0vJ_kr0GO3N40-rboNtJGiK_i9hCZ2xMoFhr3GRVjvZU-5blMdQaDD"/>
+<div class="relative z-10 font-label-lg text-on-surface">KATANA ZERO</div>
+<div class="relative z-10 text-label-sm text-on-surface-variant font-code-telemetry">60 FPS Native Cap</div>
+</div>
+<div class="h-44 rounded-xl bg-surface-container-high border border-outline-variant/30 p-4 flex flex-col justify-end relative overflow-hidden">
+<img class="absolute inset-0 w-full h-full object-cover opacity-40" data-alt="Futuristic mech maintenance bay with hydraulic robotic arms rearming a colossal bipedal combat unit, sharp atmospheric amber and cyan spotlights, detailed industrial sci-fi art." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBjwjwyqAQ1cwKaYJ7XXQnU1sawbW2rDqOpmanfqc3qo9jgIUzH52BTXsKBQizTcdYJKYd2JTBRc_HdIb1oTvKE_nxW0KQiiatdsE08pu0gplwRoWplxPAVS52yQhIhcHshCZUzX3SuZeN6Y6f24ei2CN0PF6tYxgOe-8DCMi0_Eb7UZl7qEO9TO-v8bhy-i65qe9dGSnLKuE2xCIZysnjTPQ4_yag1BkUkywrifLZ5h9_GqXnXirHJlBVlpQQD5DHy4oxiP4r0EBNZ"/>
+<div class="relative z-10 font-label-lg text-on-surface">ARMORED CORE VI</div>
+<div class="relative z-10 text-label-sm text-on-surface-variant font-code-telemetry">4.2h Session Playtime</div>
+</div>
+</div>
+</main>
+</div>
+<!-- Dim overlay backdrop on top of blurred main screen -->
+<div class="absolute inset-0 bg-surface-container-lowest/60 backdrop-blur-[2px] pointer-events-auto"></div>
+<!-- ========================================================================= -->
+<!-- RIGHT-HAND SLIDE-OUT QUICK ACCESS DRAWER / PANEL                          -->
+<!-- Width: 38vw (Desktop / Widescreen 16:9), Spans Full Screen Height         -->
+<!-- ========================================================================= -->
+<aside class="fixed right-0 top-0 bottom-0 w-[420px] lg:w-[38vw] max-w-[540px] z-50 flex flex-col bg-surface/95 backdrop-blur-2xl border-l border-primary/40 shadow-[-14px_0_36px_rgba(0,210,255,0.18)] bg-microgrid">
+<!-- Top Decorative Glowing Hairline Glass Accent -->
+<div class="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-primary-container via-secondary to-transparent"></div>
+<!-- DRAWER HEADER & PROFILE BADGE -->
+<div class="px-5 pt-4 pb-3 border-b border-outline-variant/30 bg-surface-container-low/70 flex-shrink-0">
+<div class="flex items-center justify-between gap-2 mb-2.5">
+<div class="flex items-center gap-2">
+<div class="w-8 h-8 rounded-lg bg-surface-container-high border border-primary/40 flex items-center justify-center text-primary shadow-[0_0_10px_rgba(0,210,255,0.25)]">
+<span class="material-symbols-outlined text-[18px]">speed</span>
+</div>
+<div>
+<h2 class="text-headline-md font-headline-md tracking-tight text-on-surface font-bold uppercase leading-none">PERFORMANCE OVERLAY</h2>
+<span class="text-label-sm font-label-sm text-on-surface-variant">CROSSMIX HARDWARE INSTRUMENTATION</span>
+</div>
+</div>
+<!-- Active Profile Pill Badge -->
+<div class="px-2.5 py-1 rounded-full bg-primary-container/15 border border-primary-container/60 shadow-[0_0_12px_rgba(0,210,255,0.2)] flex items-center gap-1.5">
+<span class="w-1.5 h-1.5 rounded-full bg-primary-container animate-pulse"></span>
+<span class="text-label-sm font-label-sm font-bold text-primary tracking-wider">PROFILE: BALANCED [720p 60FPS]</span>
+</div>
+</div>
+<!-- Quick Category Strip / Navigation Icons -->
+<div class="grid grid-cols-4 gap-1.5 bg-surface-container-lowest/80 p-1 rounded-lg border border-outline-variant/40">
+<button class="flex items-center justify-center gap-1.5 py-1.5 rounded bg-surface-container-high border border-primary/40 text-primary shadow-[0_0_8px_rgba(0,210,255,0.2)] transition-all">
+<span class="material-symbols-outlined text-[16px]">tune</span>
+<span class="text-label-sm font-label-sm font-bold">PERF</span>
+</button>
+<button class="flex items-center justify-center gap-1.5 py-1.5 rounded text-on-surface-variant hover:text-on-surface hover:bg-surface-container/50 transition-colors">
+<span class="material-symbols-outlined text-[16px]">battery_charging_full</span>
+<span class="text-label-sm font-label-sm">BATTERY</span>
+</button>
+<button class="flex items-center justify-center gap-1.5 py-1.5 rounded text-on-surface-variant hover:text-on-surface hover:bg-surface-container/50 transition-colors">
+<span class="material-symbols-outlined text-[16px]">volume_up</span>
+<span class="text-label-sm font-label-sm">AUDIO</span>
+</button>
+<button class="flex items-center justify-center gap-1.5 py-1.5 rounded text-on-surface-variant hover:text-on-surface hover:bg-surface-container/50 transition-colors">
+<span class="material-symbols-outlined text-[16px]">settings_system_daydream</span>
+<span class="text-label-sm font-label-sm">DECK</span>
+</button>
+</div>
+</div>
+<!-- SCROLLABLE DIAGNOSTIC CONTROLS CONTENT -->
+<div class="flex-1 overflow-y-auto px-5 py-4 space-y-4 custom-scrollbar">
+<!-- =================================================================== -->
+<!-- SECTION 1: POWER & BATTERY SAVER MODE                               -->
+<!-- =================================================================== -->
+<section class="rounded-xl p-3.5 bg-surface-container-low/75 border border-outline-variant/40 space-y-3 relative overflow-hidden shadow-lg">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary text-[20px]">battery_saver</span>
+<div>
+<div class="text-label-lg font-label-lg font-bold text-on-surface tracking-wide">BATTERY SAVER ENGINE</div>
+<div class="text-body-sm font-body-sm text-on-surface-variant">Adaptive TDP &amp; Core Throttling</div>
+</div>
+</div>
+<!-- Master Switch Toggle: Active Neon Emerald -->
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-12 h-6 bg-surface-container-highest peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[3px] after:left-[3px] after:bg-on-secondary-fixed after:border-surface-variant after:border after:rounded-full after:h-4.5 after:w-5 after:transition-all peer-checked:bg-secondary shadow-[0_0_12px_rgba(78,222,163,0.35)]"></div>
+</label>
+</div>
+<!-- Telemetry Estimate Pill Badge -->
+<div class="flex items-center justify-between p-2 rounded-lg bg-surface-container-lowest/80 border border-secondary/30">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-secondary shadow-[0_0_6px_#4edea3]"></span>
+<span class="text-label-sm font-label-sm text-on-surface">Est. Battery Runtime:</span>
+</div>
+<div class="text-label-sm font-code-telemetry text-secondary font-bold">
+            6h 45m <span class="text-secondary/70 font-normal">(+2h 15m gained)</span>
+</div>
+</div>
+<!-- CPU Frequency Governor Slider -->
+<div class="space-y-1.5 pt-1">
+<div class="flex justify-between items-center text-label-sm font-label-sm">
+<span class="text-on-surface-variant uppercase">CPU Clock Cap:</span>
+<span class="text-primary font-code-telemetry font-bold">1.008 GHz (Ondemand Power Cap)</span>
+</div>
+<div class="relative py-1">
+<input class="w-full h-1.5 bg-surface-container-highest rounded-lg appearance-none cursor-pointer accent-primary-container focus:outline-none" max="1800" min="600" step="48" type="range" value="1008"/>
+<div class="flex justify-between text-[10px] font-code-telemetry text-on-surface-variant mt-1.5 px-0.5">
+<span>600 MHz (ECO)</span>
+<span class="text-primary font-bold">1.008 GHz [OPT]</span>
+<span>1.800 GHz (TURBO)</span>
+</div>
+</div>
+</div>
+</section>
+<!-- =================================================================== -->
+<!-- SECTION 2: FRAMERATE & DISPLAY STREAM CONTROLS                      -->
+<!-- =================================================================== -->
+<section class="rounded-xl p-3.5 bg-surface-container-low/75 border border-outline-variant/40 space-y-3.5 shadow-lg">
+<div class="flex items-center justify-between border-b border-outline-variant/20 pb-2">
+<span class="text-label-md font-label-md text-primary uppercase font-bold flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px]">monitor</span>
+            FRAME PACING &amp; RASTER RESOLUTION
+          </span>
+<span class="text-label-sm font-code-telemetry text-on-surface-variant">VSYNC: FAST_ADAPTIVE</span>
+</div>
+<!-- Framerate Limiter Segmented Controls -->
+<div class="space-y-1.5">
+<div class="text-label-sm font-label-sm text-on-surface-variant">Framerate Limiter:</div>
+<div class="grid grid-cols-3 gap-2">
+<!-- Selected [30 FPS] -->
+<button class="py-1.5 px-3 rounded-lg bg-primary-container/20 border border-primary-container text-primary font-code-telemetry text-label-md font-bold shadow-[0_0_12px_rgba(0,210,255,0.3)] transition-all flex items-center justify-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-primary-container"></span>
+              [30 FPS]
+            </button>
+<button class="py-1.5 px-3 rounded-lg bg-surface-container-high/60 border border-outline-variant/40 text-on-surface-variant hover:text-on-surface font-code-telemetry text-label-md transition-colors flex items-center justify-center">
+              [60 FPS]
+            </button>
+<button class="py-1.5 px-3 rounded-lg bg-surface-container-high/60 border border-outline-variant/40 text-on-surface-variant hover:text-on-surface font-code-telemetry text-label-md transition-colors flex items-center justify-center">
+              [UNLOCKED]
+            </button>
+</div>
+</div>
+<!-- Resolution Scale Segmented Pills -->
+<div class="space-y-1.5">
+<div class="text-label-sm font-label-sm text-on-surface-variant">Internal Rendering Scale:</div>
+<div class="grid grid-cols-4 gap-1.5">
+<button class="py-1 rounded bg-surface-container-highest/40 border border-outline-variant/30 text-on-surface-variant hover:text-on-surface font-code-telemetry text-label-sm transition-colors text-center">
+              [320p]
+            </button>
+<button class="py-1 rounded bg-surface-container-highest/40 border border-outline-variant/30 text-on-surface-variant hover:text-on-surface font-code-telemetry text-label-sm transition-colors text-center">
+              [480p]
+            </button>
+<!-- Selected [720p] -->
+<button class="py-1 rounded bg-primary-container/20 border border-primary font-code-telemetry text-label-sm text-primary font-bold shadow-[0_0_10px_rgba(0,210,255,0.25)] text-center">
+              [720p]
+            </button>
+<button class="py-1 rounded bg-surface-container-highest/40 border border-outline-variant/30 text-on-surface-variant hover:text-on-surface font-code-telemetry text-label-sm transition-colors text-center">
+              [1080p]
+            </button>
+</div>
+</div>
+<!-- FSR 2.2 Sharpness Slider -->
+<div class="space-y-1.5 pt-1">
+<div class="flex justify-between items-center text-label-sm font-label-sm">
+<span class="text-on-surface-variant">FSR 2.2 Sharpness Filter:</span>
+<span class="text-primary font-code-telemetry font-bold">75%</span>
+</div>
+<div class="relative py-1">
+<div class="w-full bg-surface-container-highest h-1.5 rounded-lg overflow-hidden flex">
+<div class="bg-primary-container h-full shadow-[0_0_8px_#00d2ff]" style="width: 75%"></div>
+</div>
+<!-- Precision tick marks -->
+<div class="flex justify-between text-[10px] font-code-telemetry text-on-surface-variant mt-1.5">
+<span>0% (OFF)</span>
+<span>25%</span>
+<span>50%</span>
+<span class="text-primary font-bold">75% [CALIBRATED]</span>
+<span>100%</span>
+</div>
+</div>
+</div>
+</section>
+<!-- =================================================================== -->
+<!-- SECTION 3: HARDWARE TUNING (LED, BRIGHTNESS, AUDIO)                 -->
+<!-- =================================================================== -->
+<section class="rounded-xl p-3.5 bg-surface-container-low/75 border border-outline-variant/40 space-y-3.5 shadow-lg">
+<div class="flex items-center justify-between border-b border-outline-variant/20 pb-2">
+<span class="text-label-md font-label-md text-primary uppercase font-bold flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px]">hardware</span>
+            PERIPHERAL &amp; HARDWARE TUNING
+          </span>
+<span class="text-label-sm font-code-telemetry text-secondary">READY // I2C BUS</span>
+</div>
+<!-- RGB Analog Stick LED Ring Color Swatches -->
+<div class="space-y-1.5">
+<div class="flex justify-between text-label-sm font-label-sm">
+<span class="text-on-surface-variant">Stick Halo LED Color:</span>
+<span class="text-primary font-code-telemetry font-bold">Electric Cyan (Active)</span>
+</div>
+<div class="flex items-center gap-3 pt-1">
+<!-- Electric Cyan (Active) -->
+<div class="relative flex items-center justify-center cursor-pointer group">
+<div class="w-7 h-7 rounded-full bg-[#00d2ff] ring-2 ring-primary ring-offset-2 ring-offset-surface shadow-[0_0_14px_#00d2ff]"></div>
+<span class="absolute text-[10px] font-bold text-surface-container-lowest">✓</span>
+</div>
+<!-- Neon Green -->
+<div class="w-7 h-7 rounded-full bg-[#00ff88] hover:ring-2 hover:ring-[#00ff88]/60 ring-offset-2 ring-offset-surface cursor-pointer transition-all"></div>
+<!-- Steam Blue -->
+<div class="w-7 h-7 rounded-full bg-[#1a9fff] hover:ring-2 hover:ring-[#1a9fff]/60 ring-offset-2 ring-offset-surface cursor-pointer transition-all"></div>
+<!-- Stealth OFF -->
+<div class="w-7 h-7 rounded-full bg-[#333333] border border-outline-variant/60 hover:ring-2 hover:ring-outline/60 ring-offset-2 ring-offset-surface cursor-pointer transition-all flex items-center justify-center">
+<span class="text-[9px] font-code-telemetry text-on-surface-variant font-bold">OFF</span>
+</div>
+<span class="text-label-sm font-label-sm text-on-surface-variant ml-auto">Breathing 0.5Hz</span>
+</div>
+</div>
+<!-- Display Brightness Slider -->
+<div class="space-y-1 pt-1">
+<div class="flex justify-between items-center text-label-sm font-label-sm">
+<span class="text-on-surface-variant flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px]">brightness_medium</span>
+              Display Luminance:
+            </span>
+<div class="flex items-center gap-2">
+<span class="px-1.5 py-0.5 rounded bg-secondary/15 text-secondary text-[10px] font-code-telemetry border border-secondary/30">Energy Optimized</span>
+<span class="text-primary font-code-telemetry font-bold">40%</span>
+</div>
+</div>
+<div class="w-full bg-surface-container-highest h-1.5 rounded-lg overflow-hidden flex">
+<div class="bg-primary-container h-full" style="width: 40%"></div>
+</div>
+</div>
+<!-- Audio Volume Slider -->
+<div class="space-y-1 pt-1">
+<div class="flex justify-between items-center text-label-sm font-label-sm">
+<span class="text-on-surface-variant flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px]">volume_up</span>
+              Speaker Master Gain:
+            </span>
+<span class="text-on-surface font-code-telemetry font-bold">65%</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px] text-on-surface-variant">volume_mute</span>
+<div class="flex-1 bg-surface-container-highest h-1.5 rounded-lg overflow-hidden flex">
+<div class="bg-tertiary-container h-full" style="width: 65%"></div>
+</div>
+<span class="material-symbols-outlined text-[16px] text-primary">volume_up</span>
+</div>
+</div>
+</section>
+<!-- =================================================================== -->
+<!-- SECTION 4: FAST CHARGING & THERMAL TELEMETRY                        -->
+<!-- =================================================================== -->
+<section class="rounded-xl p-3 bg-surface-container-lowest/90 border border-outline-variant/40 space-y-2.5">
+<div class="flex items-center justify-between text-label-sm font-label-sm text-on-surface-variant border-b border-outline-variant/20 pb-1.5">
+<span class="flex items-center gap-1 font-bold text-on-surface">
+<span class="material-symbols-outlined text-secondary text-[16px]">bolt</span>
+            POWER DELIVERY CONTROLLER
+          </span>
+<span class="font-code-telemetry text-secondary font-bold">TI BQ25792 / AXP2202</span>
+</div>
+<div class="grid grid-cols-2 gap-2 text-label-sm font-code-telemetry">
+<div class="p-2 rounded bg-surface-container-high/60 border border-outline-variant/30 flex flex-col">
+<span class="text-on-surface-variant text-[10px]">FAST CHARGE I/O</span>
+<span class="text-primary font-bold text-[13px] mt-0.5">2.0A // 10W Active</span>
+<span class="text-secondary text-[10px] mt-1">PD 3.0 Handshake OK</span>
+</div>
+<div class="p-2 rounded bg-surface-container-high/60 border border-outline-variant/30 flex flex-col justify-between">
+<div class="flex justify-between items-start">
+<span class="text-on-surface-variant text-[10px]">CELL TEMP</span>
+<span class="px-1.5 py-0.2 rounded bg-secondary-container/30 text-secondary text-[9px] font-bold border border-secondary/30">SAFE</span>
+</div>
+<span class="text-on-surface font-bold text-[13px] mt-0.5">38.4°C</span>
+<span class="text-on-surface-variant text-[10px]">Thermal Limit: 65°C</span>
+</div>
+</div>
+</section>
+</div>
+<!-- =================================================================== -->
+<!-- BOTTOM CONTROLLER ACTION HINTS (DRAFTED FOR HANDHELD GAMEPAD)       -->
+<!-- =================================================================== -->
+<div class="flex-shrink-0 h-14 bg-surface-container-lowest/95 backdrop-blur-md px-5 border-t border-outline-variant/30 flex items-center justify-between text-label-sm font-code-telemetry">
+<div class="flex items-center gap-4 text-on-surface">
+<div class="flex items-center gap-1 hover:text-primary transition-colors cursor-pointer">
+<span class="w-5 h-5 rounded-full bg-surface-container-high border border-outline-variant/60 flex items-center justify-center text-[10px] text-error font-bold font-code-telemetry shadow-sm">B</span>
+<span class="text-[11px] text-on-surface-variant">CLOSE OVERLAY</span>
+</div>
+<div class="flex items-center gap-1 hover:text-primary transition-colors cursor-pointer">
+<span class="w-5 h-5 rounded-full bg-surface-container-high border border-outline-variant/60 flex items-center justify-center text-[10px] text-secondary font-bold font-code-telemetry shadow-sm">A</span>
+<span class="text-[11px] text-on-surface-variant">TOGGLE</span>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<div class="flex items-center gap-1 hover:text-primary transition-colors cursor-pointer">
+<span class="w-5 h-5 rounded-full bg-surface-container-high border border-outline-variant/60 flex items-center justify-center text-[10px] text-primary font-bold font-code-telemetry shadow-sm">X</span>
+<span class="text-[11px] text-on-surface-variant">RESET</span>
+</div>
+<div class="flex items-center gap-1 hover:text-primary transition-colors cursor-pointer">
+<span class="w-5 h-5 rounded-full bg-surface-container-high border border-outline-variant/60 flex items-center justify-center text-[10px] text-tertiary font-bold font-code-telemetry shadow-sm">Y</span>
+<span class="text-[11px] text-on-surface-variant">ADV. TDP</span>
+</div>
+</div>
+</div>
+</aside>
+</body></html>

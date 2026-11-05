@@ -89,3 +89,4 @@ SAVER_LABEL="OFF"
 
 show_msg "Settings Saved Successfully!\n\nResolution: $RESOLUTION\nFramerate: $FPS\nLayout: $LAYOUT\nBattery Saver: $SAVER_LABEL" 3
 exit 0
+

@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>CrossMix-OS // DIAGNOSTIC - System Update</title>
+<!-- Google Fonts: Inter & JetBrains Mono -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS CDN -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Configuration verbatim as defined in Design System -->
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "tertiary-fixed": "#c5e7ff",
+            "on-tertiary-container": "#005576",
+            "on-primary-fixed-variant": "#004e60",
+            "tertiary-fixed-dim": "#80cfff",
+            "inverse-surface": "#dde3ed",
+            "on-error": "#690005",
+            "on-tertiary": "#00344b",
+            "on-secondary-fixed-variant": "#005236",
+            "secondary": "#4edea3",
+            "on-primary-fixed": "#001f28",
+            "surface-container-highest": "#2f353d",
+            "error-container": "#93000a",
+            "inverse-on-surface": "#2b3139",
+            "on-primary": "#003543",
+            "surface-variant": "#2f353d",
+            "surface-dim": "#0e141b",
+            "on-background": "#dde3ed",
+            "surface-container": "#1a2027",
+            "surface-tint": "#47d6ff",
+            "tertiary-container": "#70cbff",
+            "outline-variant": "#3c494e",
+            "error": "#ffb4ab",
+            "primary-fixed": "#b6ebff",
+            "on-tertiary-fixed-variant": "#004c6b",
+            "on-error-container": "#ffdad6",
+            "surface-container-high": "#252a32",
+            "primary-container": "#00d2ff",
+            "surface-bright": "#343a42",
+            "primary-fixed-dim": "#47d6ff",
+            "on-primary-container": "#00566a",
+            "on-surface-variant": "#bbc9cf",
+            "on-secondary": "#003824",
+            "on-surface": "#dde3ed",
+            "surface": "#0e141b",
+            "on-secondary-container": "#00311f",
+            "background": "#0e141b",
+            "surface-container-lowest": "#090f16",
+            "tertiary": "#b9e3ff",
+            "secondary-fixed-dim": "#4edea3",
+            "secondary-fixed": "#6ffbbe",
+            "on-secondary-fixed": "#002113",
+            "secondary-container": "#00a572",
+            "primary": "#a5e7ff",
+            "surface-container-low": "#161c23",
+            "on-tertiary-fixed": "#001e2d",
+            "outline": "#859399",
+            "inverse-primary": "#00677f"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.125rem",
+            "lg": "0.25rem",
+            "xl": "0.5rem",
+            "full": "0.75rem"
+          },
+          "spacing": {
+            "space-xs": "0.25rem",
+            "space-xl": "1.75rem",
+            "space-lg": "1.25rem",
+            "space-sm": "0.5rem",
+            "space-md": "0.75rem",
+            "gutter": "0.75rem",
+            "margin": "1rem"
+          },
+          "fontFamily": {
+            "headline-xl": ["Inter"],
+            "label-lg": ["JetBrains Mono"],
+            "headline-md": ["Inter"],
+            "headline-lg": ["Inter"],
+            "body-sm": ["Inter"],
+            "body-lg": ["Inter"],
+            "body-md": ["Inter"],
+            "label-sm": ["JetBrains Mono"],
+            "code-telemetry": ["JetBrains Mono"],
+            "label-md": ["JetBrains Mono"]
+          },
+          "fontSize": {
+            "headline-xl": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "label-lg": ["14px", { "lineHeight": "20px", "letterSpacing": "0.04em", "fontWeight": "600" }],
+            "headline-md": ["20px", { "lineHeight": "28px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+            "headline-lg": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+            "body-sm": ["12px", { "lineHeight": "16px", "fontWeight": "400" }],
+            "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+            "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+            "label-sm": ["11px", { "lineHeight": "14px", "letterSpacing": "0.08em", "fontWeight": "500" }],
+            "code-telemetry": ["18px", { "lineHeight": "22px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "label-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0.06em", "fontWeight": "500" }]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20;
+      display: inline-block;
+      vertical-align: middle;
+      line-height: 1;
+    }
+    /* Hardware scanline & micro-grid backdrop */
+    .bg-micro-grid {
+      background-size: 16px 16px;
+      background-image: 
+        linear-gradient(to right, rgba(0, 210, 255, 0.035) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(0, 210, 255, 0.035) 1px, transparent 1px);
+    }
+    @keyframes pulse-glow {
+      0%, 100% { opacity: 0.9; filter: drop-shadow(0 0 10px rgba(0, 210, 255, 0.6)); }
+      50% { opacity: 0.4; filter: drop-shadow(0 0 2px rgba(0, 210, 255, 0.2)); }
+    }
+    .animate-neon-pulse {
+      animation: pulse-glow 2.4s infinite ease-in-out;
+    }
+    @keyframes sweep {
+      0% { transform: translateX(-100%); }
+      100% { transform: translateX(200%); }
+    }
+    .animate-progress-sweep {
+      animation: sweep 2.2s infinite ease-in-out;
+    }
+  </style>
+</head>
+<body class="bg-background text-on-surface font-body-md select-none overflow-x-hidden min-h-screen bg-micro-grid antialiased flex flex-col justify-between">
+<!-- ========================================================================= -->
+<!-- 1. TOP APP BAR (Shared Component: TopAppBar exact structure & token keys) -->
+<!-- ========================================================================= -->
+<header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-4 py-2 h-10 bg-surface-container-low/80 dark:bg-surface-container-lowest/80 backdrop-blur-md shadow-sm border-b border-outline-variant/30">
+<!-- Brand Anchor & Sub-Badge -->
+<div class="flex items-center gap-3">
+<div class="flex items-center gap-2">
+<span class="w-2.5 h-2.5 rounded-full bg-primary-container shadow-[0_0_8px_rgba(0,210,255,0.7)] animate-ping"></span>
+<span class="w-2 h-2 rounded-full bg-primary-container shadow-[0_0_8px_rgba(0,210,255,0.7)] -ml-3.5"></span>
+<span class="text-label-lg font-label-lg tracking-wider text-primary uppercase font-bold">
+          CrossMix-OS // DIAGNOSTIC
+        </span>
+</div>
+<span class="text-label-sm font-label-sm px-2 py-0.5 rounded bg-surface-container-high/80 text-on-surface-variant border border-outline-variant/40">
+        STEAM EDITION // OTA-DAEMON
+      </span>
+</div>
+<!-- Center System Status Pill -->
+<div class="hidden lg:flex items-center gap-2 px-3 py-0.5 rounded-full bg-surface-container-lowest border border-primary/30 shadow-[0_0_10px_rgba(0,210,255,0.15)]">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary shadow-[0_0_6px_#10B981]"></span>
+<span class="text-label-sm font-label-sm text-primary tracking-widest uppercase">
+        PACKAGE DOWNLOAD: ACTIVE [SYSTEM CORE]
+      </span>
+</div>
+<!-- Trailing Hardware Indicators (Material Symbols strictly matching JSON) -->
+<div class="flex items-center gap-4 text-primary">
+<!-- Thermostat Telemetry -->
+<div class="flex items-center gap-1.5 text-on-surface-variant">
+<span class="material-symbols-outlined text-[16px] text-primary" data-icon="thermostat">thermostat</span>
+<span class="text-label-sm font-code-telemetry text-on-surface">39°C</span>
+</div>
+<!-- Wi-Fi Telemetry -->
+<div class="flex items-center gap-1.5 text-on-surface-variant">
+<span class="material-symbols-outlined text-[16px] text-primary" data-icon="wifi">wifi</span>
+<span class="text-label-sm font-code-telemetry text-on-surface">5.0 GHz // 78 Mbps</span>
+</div>
+<!-- Battery Telemetry -->
+<div class="flex items-center gap-1.5 text-secondary">
+<span class="material-symbols-outlined text-[16px] text-secondary" data-icon="battery_charging_full" data-weight="fill" style="font-variation-settings: 'FILL' 1;">battery_charging_full</span>
+<span class="text-label-sm font-code-telemetry text-secondary-fixed">85% [4h 12m]</span>
+</div>
+<!-- Clock / Schedule Telemetry -->
+<div class="flex items-center gap-1.5 border-l border-outline-variant/40 pl-3">
+<span class="material-symbols-outlined text-[16px] text-primary" data-icon="schedule">schedule</span>
+<span class="text-label-sm font-code-telemetry text-primary">14:40</span>
+</div>
+</div>
+</header>
+<!-- ========================================================================= -->
+<!-- 2. MAIN VIEWPORT CANVAS (16:9 Landscape Handheld Dashboard Layout)          -->
+<!-- ========================================================================= -->
+<main class="w-full max-w-7xl mx-auto px-4 pt-14 pb-16 flex-1 flex flex-col gap-4">
+<!-- Version Transition HUD Banner -->
+<section class="w-full bg-surface-container-low/70 border border-outline-variant/30 rounded-xl p-3 backdrop-blur-md flex flex-wrap items-center justify-between gap-3 shadow-[0_4px_20px_rgba(0,0,0,0.5)]">
+<div class="flex items-center gap-3">
+<div class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-surface-container-lowest border border-outline-variant/40">
+<span class="text-label-sm font-label-sm text-on-surface-variant">INSTALLED</span>
+<span class="text-label-md font-code-telemetry text-on-surface">v1.3.0</span>
+</div>
+<div class="flex items-center gap-1 text-primary animate-neon-pulse px-1">
+<span class="text-label-sm font-label-sm tracking-tighter">━━━━▶</span>
+</div>
+<div class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-surface-container-high border border-primary/40 shadow-[0_0_12px_rgba(0,210,255,0.2)]">
+<span class="text-label-sm font-label-sm text-primary">TARGET BUILD</span>
+<span class="text-label-md font-code-telemetry text-primary font-bold">v1.3.1 (Latest Steam Edition)</span>
+</div>
+</div>
+<div class="flex items-center gap-2.5">
+<span class="px-2.5 py-1 rounded bg-secondary/10 border border-secondary/40 text-secondary text-label-sm font-code-telemetry flex items-center gap-1.5 shadow-[0_0_8px_rgba(78,222,163,0.2)]">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+          OTA UPDATE READY
+        </span>
+<div class="text-label-sm font-code-telemetry text-on-surface-variant hidden md:block">
+          CHANNEL: <span class="text-primary">STABLE-DECK-ARM64</span>
+</div>
+</div>
+</section>
+<!-- 2-Column Split Telemetry Bento Grid -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-4 flex-1 items-stretch">
+<!-- LEFT COLUMN: Download Telemetry Engine (7 Cols) -->
+<section class="lg:col-span-7 flex flex-col gap-4">
+<div class="bg-surface-container-low/75 border border-outline-variant/30 rounded-xl p-4 backdrop-blur-md flex flex-col justify-between h-full relative overflow-hidden shadow-[0_8px_24px_rgba(0,0,0,0.65)]">
+<!-- Top Card Meta -->
+<div class="flex items-start justify-between gap-2 border-b border-outline-variant/20 pb-3">
+<div>
+<div class="flex items-center gap-2 mb-1">
+<span class="text-label-sm font-label-sm text-primary uppercase">ARCHIVE STREAM</span>
+<span class="px-1.5 py-0.5 rounded text-[10px] font-label-sm bg-surface-container-highest text-secondary border border-secondary/30">PAYLOAD OK</span>
+</div>
+<h2 class="text-body-md font-code-telemetry text-on-surface font-semibold tracking-wide">
+                crossmix-os-steam-v1.3.1.tar.gz
+              </h2>
+</div>
+<div class="text-right">
+<span class="text-label-sm font-label-sm text-on-surface-variant block">SHA-256 CHECK</span>
+<span class="text-label-sm font-code-telemetry text-primary/80">9b2f...81dc (VERIFIED)</span>
+</div>
+</div>
+<!-- Main Percentage Indicator & Hero Readout -->
+<div class="my-4 flex items-end justify-between">
+<div class="flex items-baseline gap-3">
+<span class="text-headline-xl font-code-telemetry text-primary-container tracking-tight drop-shadow-[0_0_16px_rgba(0,210,255,0.4)]">
+                41%
+              </span>
+<span class="text-label-md font-label-md text-on-surface-variant uppercase tracking-widest">
+                COMPLETED
+              </span>
+</div>
+<div class="text-right">
+<span class="text-label-sm font-label-sm text-on-surface-variant block">THROUGHPUT RATE</span>
+<span class="text-code-telemetry font-code-telemetry text-secondary">3.24 MB/s</span>
+<span class="text-label-sm font-label-sm text-on-surface-variant block">(Peak: 3.81 MB/s)</span>
+</div>
+</div>
+<!-- Glowing Dual-Gradient Progress Bar -->
+<div class="relative w-full h-3 rounded-full bg-surface-container-highest overflow-hidden p-0.5 border border-outline-variant/40">
+<div class="h-full rounded-full bg-gradient-to-r from-primary-container via-primary to-secondary w-[41%] relative shadow-[0_0_12px_rgba(0,210,255,0.8)]">
+<!-- Pulsating edge highlight -->
+<span class="absolute right-0 top-0 bottom-0 w-2 bg-white rounded-full shadow-[0_0_8px_#ffffff] animate-ping"></span>
+<div class="absolute inset-0 bg-white/20 animate-progress-sweep"></div>
+</div>
+</div>
+<!-- Download Statistics Telemetry Quad -->
+<div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-4 pt-3 border-t border-outline-variant/20">
+<div class="p-2 rounded bg-surface-container-lowest/60 border border-outline-variant/20">
+<span class="text-label-sm font-label-sm text-on-surface-variant block">TRANSFERRED</span>
+<span class="text-label-md font-code-telemetry text-on-surface">402.41 MB</span>
+<span class="text-[10px] font-label-sm text-on-surface-variant">OF 960.26 MB</span>
+</div>
+<div class="p-2 rounded bg-surface-container-lowest/60 border border-outline-variant/20">
+<span class="text-label-sm font-label-sm text-on-surface-variant block">ETA REMAINING</span>
+<span class="text-label-md font-code-telemetry text-primary font-bold">2m 46s</span>
+<span class="text-[10px] font-label-sm text-on-surface-variant">AUTO-INSTALL ON FINISH</span>
+</div>
+<div class="p-2 rounded bg-surface-container-lowest/60 border border-outline-variant/20">
+<span class="text-label-sm font-label-sm text-on-surface-variant block">ACTIVE THREADS</span>
+<span class="text-label-md font-code-telemetry text-secondary">8 / 8 CORES</span>
+<span class="text-[10px] font-label-sm text-on-surface-variant">PARALLEL CHUNKS</span>
+</div>
+<div class="p-2 rounded bg-surface-container-lowest/60 border border-outline-variant/20">
+<span class="text-label-sm font-label-sm text-on-surface-variant block">I/O DISK SYNC</span>
+<span class="text-label-md font-code-telemetry text-on-surface">28.4 MB/s</span>
+<span class="text-[10px] font-label-sm text-on-surface-variant">mmcblk0p1 [64MB BUF]</span>
+</div>
+</div>
+<!-- Real-Time Bandwidth Vector Waveform Sparkline -->
+<div class="mt-4 pt-3 border-t border-outline-variant/20">
+<div class="flex items-center justify-between mb-1.5">
+<span class="text-label-sm font-label-sm text-on-surface-variant">BANDWIDTH STABILITY [PAST 60s]</span>
+<span class="text-label-sm font-code-telemetry text-primary">MIRROR #04 (EU-Frankfurt) // SSL VERIFIED</span>
+</div>
+<div class="w-full h-24 bg-surface-container-lowest/80 rounded border border-outline-variant/30 relative p-1 overflow-hidden">
+<!-- Internal gridlines -->
+<div class="absolute inset-0 flex flex-col justify-between p-2 pointer-events-none opacity-20">
+<div class="border-b border-primary/40 w-full"></div>
+<div class="border-b border-primary/40 w-full"></div>
+<div class="border-b border-primary/40 w-full"></div>
+</div>
+<!-- Vector Waveform Graph -->
+<svg class="w-full h-full" preserveaspectratio="none" viewbox="0 0 500 80">
+<defs>
+<lineargradient id="cyanGradient" x1="0" x2="0" y1="0" y2="1">
+<stop offset="0%" stop-color="#00D2FF" stop-opacity="0.35"></stop>
+<stop offset="100%" stop-color="#00D2FF" stop-opacity="0.0"></stop>
+</lineargradient>
+</defs>
+<!-- Area Under Line -->
+<polygon fill="url(#cyanGradient)" points="
+                  0,80 
+                  0,65 30,62 60,55 90,58 120,48 150,52 180,42 210,40 240,46 270,38 300,42 330,35 360,37 390,32 420,34 450,28 480,26 500,25
+                  500,80
+                "></polygon>
+<!-- Telemetry Line -->
+<polyline fill="none" points="
+                  0,65 30,62 60,55 90,58 120,48 150,52 180,42 210,40 240,46 270,38 300,42 330,35 360,37 390,32 420,34 450,28 480,26 500,25
+                " stroke="#00D2FF" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></polyline>
+<!-- Live Lead Dot -->
+<circle class="filter drop-shadow-[0_0_6px_#4edea3]" cx="500" cy="25" fill="#4edea3" r="4"></circle>
+</svg>
+</div>
+</div>
+</div>
+</section>
+<!-- RIGHT COLUMN: Release Highlights & Changelog (5 Cols) -->
+<section class="lg:col-span-5 flex flex-col">
+<div class="bg-surface-container-low/75 border border-outline-variant/30 rounded-xl p-4 backdrop-blur-md flex flex-col h-full shadow-[0_8px_24px_rgba(0,0,0,0.65)]">
+<!-- Changelog Header -->
+<div class="flex items-center justify-between border-b border-outline-variant/20 pb-3 mb-3">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[18px]" data-icon="terminal">terminal</span>
+<h3 class="text-body-md font-headline-md text-on-surface font-semibold">
+                WHAT'S NEW IN v1.3.1
+              </h3>
+</div>
+<span class="text-label-sm font-label-sm px-2 py-0.5 rounded bg-surface-container-highest text-primary">
+              6 CORE PATCHES
+            </span>
+</div>
+<!-- Highlight Items List -->
+<div class="flex-1 overflow-y-auto pr-1 flex flex-col gap-2.5 max-h-[380px]">
+<!-- Item 1 -->
+<div class="p-2.5 rounded-lg bg-surface-container-lowest/60 border border-outline-variant/30 hover:border-primary/40 transition-colors">
+<div class="flex items-center justify-between gap-1 mb-1">
+<span class="text-body-sm font-semibold text-on-surface">Steam Vector Icon &amp; Theme</span>
+<span class="px-1.5 py-0.5 text-[9px] font-label-sm rounded bg-primary/10 text-primary border border-primary/30 uppercase">THEME</span>
+</div>
+<p class="text-body-sm text-on-surface-variant">Native Deck-inspired obsidian glass theme with custom animated glyphs and dark contrast calibration.</p>
+</div>
+<!-- Item 2 -->
+<div class="p-2.5 rounded-lg bg-surface-container-lowest/60 border border-outline-variant/30 hover:border-primary/40 transition-colors">
+<div class="flex items-center justify-between gap-1 mb-1">
+<span class="text-body-sm font-semibold text-on-surface">Complete English Language UI</span>
+<span class="px-1.5 py-0.5 text-[9px] font-label-sm rounded bg-secondary/10 text-secondary border border-secondary/30 uppercase">I18N</span>
+</div>
+<p class="text-body-sm text-on-surface-variant">Comprehensive locale polish across all settings, telemetry meters, and cold-boot recovery menus.</p>
+</div>
+<!-- Item 3 -->
+<div class="p-2.5 rounded-lg bg-surface-container-lowest/60 border border-outline-variant/30 hover:border-primary/40 transition-colors">
+<div class="flex items-center justify-between gap-1 mb-1">
+<span class="text-body-sm font-semibold text-on-surface">Hardware Controller Mapping</span>
+<span class="px-1.5 py-0.5 text-[9px] font-label-sm rounded bg-tertiary-container/20 text-tertiary border border-tertiary/30 uppercase">INPUT</span>
+</div>
+<p class="text-body-sm text-on-surface-variant">Auto-detect Xbox 360, DualSense &amp; Nintendo Switch Pro controller layouts with seamless hot-swap.</p>
+</div>
+<!-- Item 4 -->
+<div class="p-2.5 rounded-lg bg-surface-container-lowest/60 border border-outline-variant/30 hover:border-primary/40 transition-colors">
+<div class="flex items-center justify-between gap-1 mb-1">
+<span class="text-body-sm font-semibold text-on-surface">Dynamic Streaming &amp; FPS Control</span>
+<span class="px-1.5 py-0.5 text-[9px] font-label-sm rounded bg-primary/10 text-primary border border-primary/30 uppercase">VIDEO</span>
+</div>
+<p class="text-body-sm text-on-surface-variant">Auto/1080p/720p/480p/320p resolution selector accompanied by low-latency 60FPS / 30FPS toggle.</p>
+</div>
+<!-- Item 5 -->
+<div class="p-2.5 rounded-lg bg-surface-container-lowest/60 border border-outline-variant/30 hover:border-primary/40 transition-colors">
+<div class="flex items-center justify-between gap-1 mb-1">
+<span class="text-body-sm font-semibold text-on-surface">Dedicated Battery Saver Engine</span>
+<span class="px-1.5 py-0.5 text-[9px] font-label-sm rounded bg-secondary/10 text-secondary border border-secondary/30 uppercase">POWER</span>
+</div>
+<p class="text-body-sm text-on-surface-variant">Dynamic 1.0 GHz CPU frequency cap and automated OLED sub-pixel dimming profile during sleep.</p>
+</div>
+<!-- Item 6 -->
+<div class="p-2.5 rounded-lg bg-surface-container-lowest/60 border border-outline-variant/30 hover:border-primary/40 transition-colors">
+<div class="flex items-center justify-between gap-1 mb-1">
+<span class="text-body-sm font-semibold text-on-surface">Fast Charging 2.0A Daemon</span>
+<span class="px-1.5 py-0.5 text-[9px] font-label-sm rounded bg-surface-container-highest text-on-surface-variant border border-outline-variant/40 uppercase">KERNEL</span>
+</div>
+<p class="text-body-sm text-on-surface-variant">Optimized thermal charge curve regulation with cyan breathing ring animation on charge port.</p>
+</div>
+</div>
+<!-- Bottom Security Status Footer -->
+<div class="mt-3 pt-2.5 border-t border-outline-variant/20 flex items-center justify-between text-label-sm font-code-telemetry text-on-surface-variant">
+<span class="flex items-center gap-1.5">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+              PGP SIGNATURE VALID
+            </span>
+<span class="text-primary font-bold">CROSSMIX TEAM</span>
+</div>
+</div>
+</section>
+</div>
+</main>
+<!-- ========================================================================= -->
+<!-- 3. BOTTOM ACTION BAR (Shared Component: BottomNavBar exact layout & rules)-->
+<!-- ========================================================================= -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-end items-center gap-6 px-6 py-2.5 h-12 bg-surface-container-lowest/90 dark:bg-surface-container-lowest/90 backdrop-blur-md shadow-lg border-t border-outline-variant/30">
+<!-- Item 1: (A) SELECT - Active state matching Shared Component style_active_navigation -->
+<div class="flex items-center gap-2 text-primary font-code-telemetry px-2 py-1 rounded bg-surface-container-high/60 border border-primary/40 shadow-[0_0_12px_rgba(0,210,255,0.25)] active:scale-95 transition-transform duration-100 cursor-pointer">
+<span class="material-symbols-outlined text-[16px] text-primary" data-icon="check_circle">check_circle</span>
+<span class="text-label-md font-label-md uppercase tracking-wider">(A) SELECT</span>
+</div>
+<!-- Item 2: (B) BACK - Inactive state matching Shared Component style_inactive_navigation -->
+<div class="flex items-center gap-2 text-on-surface-variant font-code-telemetry px-2 py-1 hover:bg-surface-container/50 hover:text-secondary transition-colors duration-150 active:scale-95 transition-transform duration-100 cursor-pointer">
+<span class="material-symbols-outlined text-[16px] text-error" data-icon="cancel">cancel</span>
+<span class="text-label-md font-label-md uppercase tracking-wider">(B) BACK</span>
+</div>
+<!-- Item 3: (X) CALIBRATE - Inactive state matching Shared Component style_inactive_navigation -->
+<div class="flex items-center gap-2 text-on-surface-variant font-code-telemetry px-2 py-1 hover:bg-surface-container/50 hover:text-secondary transition-colors duration-150 active:scale-95 transition-transform duration-100 cursor-pointer">
+<span class="material-symbols-outlined text-[16px] text-primary" data-icon="tune">tune</span>
+<span class="text-label-md font-label-md uppercase tracking-wider">(X) CALIBRATE</span>
+</div>
+<!-- Item 4: (Y) LOGS - Inactive state matching Shared Component style_inactive_navigation -->
+<div class="flex items-center gap-2 text-on-surface-variant font-code-telemetry px-2 py-1 hover:bg-surface-container/50 hover:text-secondary transition-colors duration-150 active:scale-95 transition-transform duration-100 cursor-pointer">
+<span class="material-symbols-outlined text-[16px] text-secondary" data-icon="terminal">terminal</span>
+<span class="text-label-md font-label-md uppercase tracking-wider">(Y) LOGS</span>
+</div>
+</nav>
+</body></html>

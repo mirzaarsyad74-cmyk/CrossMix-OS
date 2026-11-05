@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>CrossMix-OS // STEAM EDITION</title>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Fonts: Inter & JetBrains Mono -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "on-primary-fixed": "#001f28",
+            "surface-dim": "#0e141b",
+            "surface-container": "#1a2027",
+            "primary": "#a5e7ff",
+            "surface-container-highest": "#2f353d",
+            "secondary-fixed": "#6ffbbe",
+            "secondary-fixed-dim": "#4edea3",
+            "surface-container-high": "#252a32",
+            "on-error": "#690005",
+            "tertiary": "#b9e3ff",
+            "tertiary-fixed": "#c5e7ff",
+            "surface-bright": "#343a42",
+            "inverse-on-surface": "#2b3139",
+            "on-secondary-fixed": "#002113",
+            "error": "#ffb4ab",
+            "secondary": "#4edea3",
+            "on-primary-container": "#00566a",
+            "inverse-primary": "#00677f",
+            "surface-container-lowest": "#090f16",
+            "background": "#0e141b",
+            "error-container": "#93000a",
+            "tertiary-container": "#70cbff",
+            "surface-tint": "#47d6ff",
+            "surface": "#0e141b",
+            "secondary-container": "#00a572",
+            "on-tertiary-fixed": "#001e2d",
+            "outline-variant": "#3c494e",
+            "tertiary-fixed-dim": "#80cfff",
+            "on-surface": "#dde3ed",
+            "on-tertiary": "#00344b",
+            "on-tertiary-container": "#005576",
+            "on-error-container": "#ffdad6",
+            "on-tertiary-fixed-variant": "#004c6b",
+            "on-background": "#dde3ed",
+            "on-primary-fixed-variant": "#004e60",
+            "on-secondary-fixed-variant": "#005236",
+            "surface-variant": "#2f353d",
+            "surface-container-low": "#161c23",
+            "primary-fixed": "#b6ebff",
+            "outline": "#859399",
+            "on-secondary-container": "#00311f",
+            "inverse-surface": "#dde3ed",
+            "on-surface-variant": "#bbc9cf",
+            "primary-container": "#00d2ff",
+            "primary-fixed-dim": "#47d6ff",
+            "on-secondary": "#003824",
+            "on-primary": "#003543"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.125rem",
+            "lg": "0.25rem",
+            "xl": "0.5rem",
+            "full": "0.75rem"
+          },
+          "spacing": {
+            "space-sm": "0.5rem",
+            "gutter": "0.75rem",
+            "space-lg": "1.25rem",
+            "space-xs": "0.25rem",
+            "space-md": "0.75rem",
+            "space-xl": "1.75rem",
+            "margin": "1rem"
+          },
+          "fontFamily": {
+            "headline-xl": ["Inter"],
+            "code-telemetry": ["JetBrains Mono"],
+            "label-md": ["JetBrains Mono"],
+            "headline-lg": ["Inter"],
+            "body-sm": ["Inter"],
+            "body-md": ["Inter"],
+            "label-lg": ["JetBrains Mono"],
+            "headline-md": ["Inter"],
+            "body-lg": ["Inter"],
+            "label-sm": ["JetBrains Mono"]
+          },
+          "fontSize": {
+            "headline-xl": ["32px", { lineHeight: "40px", letterSpacing: "-0.02em", fontWeight: "700" }],
+            "code-telemetry": ["18px", { lineHeight: "22px", letterSpacing: "-0.02em", fontWeight: "700" }],
+            "label-md": ["12px", { lineHeight: "16px", letterSpacing: "0.06em", fontWeight: "500" }],
+            "headline-lg": ["24px", { lineHeight: "32px", letterSpacing: "-0.01em", fontWeight: "600" }],
+            "body-sm": ["12px", { lineHeight: "16px", fontWeight: "400" }],
+            "body-md": ["14px", { lineHeight: "20px", fontWeight: "400" }],
+            "label-lg": ["14px", { lineHeight: "20px", letterSpacing: "0.04em", fontWeight: "600" }],
+            "headline-md": ["20px", { lineHeight: "28px", letterSpacing: "-0.01em", fontWeight: "600" }],
+            "body-lg": ["16px", { lineHeight: "24px", fontWeight: "400" }],
+            "label-sm": ["11px", { lineHeight: "14px", letterSpacing: "0.08em", fontWeight: "500" }]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+    .hud-grid-pattern {
+      background-size: 24px 24px;
+      background-image: 
+        linear-gradient(to right, rgba(0, 210, 255, 0.035) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(0, 210, 255, 0.035) 1px, transparent 1px);
+    }
+    .hero-glow-cyan {
+      box-shadow: 0 0 35px rgba(0, 210, 255, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+    }
+    .focus-ring-cyan {
+      box-shadow: 0 0 16px rgba(0, 210, 255, 0.35);
+    }
+  </style>
+</head>
+<body class="bg-background text-on-surface select-none overflow-x-hidden min-h-screen relative font-body-md hud-grid-pattern antialiased">
+<!-- Ambient Chromatic Radial Spotlights -->
+<div class="fixed top-0 left-1/4 w-[600px] h-[350px] bg-primary-container/10 blur-[130px] rounded-full pointer-events-none -z-10"></div>
+<div class="fixed bottom-0 right-1/4 w-[500px] h-[300px] bg-secondary-container/10 blur-[120px] rounded-full pointer-events-none -z-10"></div>
+<!-- ================= TOP APP BAR (Shared Component Execution) ================= -->
+<header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-4 py-2 h-10 bg-surface-container-low/80 dark:bg-surface-container-lowest/80 backdrop-blur-md shadow-sm">
+<!-- Brand Anchor -->
+<div class="flex items-center gap-space-sm">
+<div class="flex items-center gap-1.5 px-2 py-0.5 rounded bg-surface-container-high border border-outline-variant/40">
+<span class="material-symbols-outlined text-primary text-base" data-icon="sports_esports" style="font-variation-settings: 'FILL' 1;">sports_esports</span>
+<span class="text-label-lg font-label-lg tracking-wider text-primary uppercase font-bold">CrossMix-OS // STEAM EDITION</span>
+</div>
+</div>
+<!-- Center Navigation Links -->
+<nav class="hidden md:flex items-center gap-6 h-full">
+<a class="text-primary border-b-2 border-primary font-code-telemetry font-bold text-label-md px-1 py-1.5 transition-colors" href="#">
+        GAMES // STEAM
+      </a>
+<a class="text-on-surface-variant font-code-telemetry hover:text-on-surface text-label-md px-1 py-1.5 transition-colors" href="#">
+        PORTS
+      </a>
+<a class="text-on-surface-variant font-code-telemetry hover:text-on-surface text-label-md px-1 py-1.5 transition-colors" href="#">
+        APPS &amp; TOOLS
+      </a>
+<a class="text-on-surface-variant font-code-telemetry hover:text-on-surface text-label-md px-1 py-1.5 transition-colors" href="#">
+        SYSTEM SETTINGS
+      </a>
+</nav>
+<!-- Right Trailing Telemetry Actions -->
+<div class="flex items-center gap-3">
+<!-- Thermostat / SoC -->
+<div class="flex items-center gap-1 text-on-surface-variant">
+<span class="material-symbols-outlined text-sm text-secondary" data-icon="thermostat">thermostat</span>
+<span class="font-code-telemetry text-label-sm text-on-surface">38°C</span>
+</div>
+<!-- Wi-Fi -->
+<div class="flex items-center gap-1 text-on-surface-variant">
+<span class="material-symbols-outlined text-sm text-primary" data-icon="wifi">wifi</span>
+<span class="font-code-telemetry text-label-sm text-on-surface">5.0G</span>
+</div>
+<!-- Battery Status -->
+<div class="flex items-center gap-1 bg-surface-container px-2 py-0.5 rounded border border-outline-variant/30">
+<span class="material-symbols-outlined text-sm text-secondary animate-pulse" data-icon="battery_charging_full" style="font-variation-settings: 'FILL' 1;">battery_charging_full</span>
+<span class="font-code-telemetry text-label-sm text-secondary font-bold">85%</span>
+</div>
+<!-- Clock -->
+<div class="flex items-center gap-1 text-on-surface-variant pl-1">
+<span class="material-symbols-outlined text-sm" data-icon="schedule">schedule</span>
+<span class="font-code-telemetry text-label-sm text-on-surface">14:45</span>
+</div>
+</div>
+</header>
+<!-- ================= MAIN VIEWPORT CONTENT CANVAS ================= -->
+<main class="pt-14 pb-16 px-4 md:px-6 max-w-[1440px] mx-auto flex flex-col gap-4">
+<!-- HERO SHOWCASE: Steam Big Picture // Remote Play -->
+<section class="relative w-full rounded-xl overflow-hidden border border-primary/30 bg-surface-container-low/75 backdrop-blur-md hero-glow-cyan p-5 md:p-6 transition-all">
+<!-- Background Ambient Graphic Matrix -->
+<div class="absolute inset-0 pointer-events-none opacity-20 bg-gradient-to-r from-primary-container/20 via-transparent to-surface-container-lowest"></div>
+<div class="relative z-10 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
+<!-- Left Hero Details -->
+<div class="flex-1 space-y-3">
+<!-- Connection Status Pill -->
+<div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-surface-container-high/90 border border-secondary/40 backdrop-blur-sm shadow-[0_0_12px_rgba(78,222,163,0.15)]">
+<span class="relative flex h-2 w-2">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-secondary opacity-75"></span>
+<span class="relative inline-flex rounded-full h-2 w-2 bg-secondary"></span>
+</span>
+<span class="font-code-telemetry text-label-sm text-secondary tracking-wider font-semibold">READY TO STREAM // HOST PC DETECTED (192.168.1.100)</span>
+</div>
+<!-- Hero Title & Subtitle -->
+<div>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-2xl" data-icon="stream">stream</span>
+<h1 class="text-headline-xl font-headline-xl tracking-tight text-on-surface drop-shadow-sm">Steam Big Picture // Remote Play</h1>
+</div>
+<p class="text-body-md font-body-md text-on-surface-variant max-w-2xl mt-1">
+              Launch low-latency direct moonlight/steam stream from Rig-Alpha with unified deck control and hardware-accelerated H.265 pipeline.
+            </p>
+</div>
+<!-- Primary CTA Launch & Preset Chips -->
+<div class="flex flex-wrap items-center gap-3 pt-2">
+<button class="flex items-center gap-2.5 px-5 py-2.5 rounded-lg bg-primary-container text-on-primary-fixed font-code-telemetry text-label-lg font-bold tracking-wide shadow-[0_0_20px_rgba(0,210,255,0.4)] hover:brightness-110 active:scale-95 transition-all">
+<span class="material-symbols-outlined text-lg" data-icon="play_arrow" style="font-variation-settings: 'FILL' 1;">play_arrow</span>
+              (A) START STEAM BIG PICTURE
+            </button>
+<div class="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-surface-container-high/70 border border-outline-variant/30 text-on-surface-variant font-code-telemetry text-label-sm">
+<span class="material-symbols-outlined text-sm text-primary" data-icon="desktop_windows">desktop_windows</span>
+<span>HOST: RIG-ALPHA [RTX 4090]</span>
+</div>
+</div>
+</div>
+<!-- Right Hero Stream Telemetry Module Plate -->
+<div class="w-full lg:w-auto min-w-[280px] bg-surface-container-lowest/80 border border-outline-variant/40 rounded-lg p-3.5 space-y-2.5 shadow-inner">
+<div class="flex items-center justify-between border-b border-outline-variant/30 pb-1.5">
+<span class="text-label-sm font-label-sm text-primary tracking-wider uppercase font-semibold">STREAM TELEMETRY</span>
+<span class="inline-block w-2 h-2 rounded-full bg-secondary"></span>
+</div>
+<div class="grid grid-cols-2 gap-2.5">
+<div class="bg-surface-container/60 p-2 rounded border border-outline-variant/20">
+<span class="text-label-sm font-label-sm text-on-surface-variant block">RESOLUTION</span>
+<span class="text-label-md font-code-telemetry text-on-surface font-bold">720p @ 60 FPS</span>
+</div>
+<div class="bg-surface-container/60 p-2 rounded border border-outline-variant/20">
+<span class="text-label-sm font-label-sm text-on-surface-variant block">PIPE LATENCY</span>
+<span class="text-label-md font-code-telemetry text-secondary font-bold">4.2 ms</span>
+</div>
+<div class="bg-surface-container/60 p-2 rounded border border-outline-variant/20">
+<span class="text-label-sm font-label-sm text-on-surface-variant block">BITRATE</span>
+<span class="text-label-md font-code-telemetry text-on-surface font-bold">45.0 Mbps</span>
+</div>
+<div class="bg-surface-container/60 p-2 rounded border border-outline-variant/20">
+<span class="text-label-sm font-label-sm text-on-surface-variant block">CODEC</span>
+<span class="text-label-md font-code-telemetry text-primary font-bold">H.265 / HEVC</span>
+</div>
+</div>
+<div class="flex items-center justify-between text-label-sm font-code-telemetry text-on-surface-variant pt-1 px-1">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-xs text-primary" data-icon="gamepad">gamepad</span>
+<span>Xbox 360 mapped</span>
+</div>
+<span class="text-secondary text-label-sm">DirectInput</span>
+</div>
+</div>
+</div>
+</section>
+<!-- SECTION TITLE: QUICK LAUNCH & PRESETS -->
+<div class="flex items-center justify-between mt-1 px-1">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-sm" data-icon="grid_view">grid_view</span>
+<h2 class="text-label-lg font-label-lg uppercase tracking-wider text-on-surface">LAUNCH PRESETS &amp; PORTS</h2>
+</div>
+<div class="flex items-center gap-2 text-label-sm font-code-telemetry text-on-surface-variant">
+<span>5 PROFILES CONFIGURED</span>
+</div>
+</div>
+<!-- HORIZONTAL TILES CAROUSEL / BENTO GRID -->
+<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3.5">
+<!-- Card 1: 1080p 60FPS High Def -->
+<article class="group relative rounded-lg bg-surface-container-low/80 border border-outline-variant/30 hover:border-primary/60 hover:bg-surface-container-high transition-all duration-200 overflow-hidden flex flex-col justify-between p-3.5 cursor-pointer">
+<div class="flex justify-between items-start mb-3">
+<span class="px-2 py-0.5 rounded text-label-sm font-code-telemetry font-bold bg-primary-container/20 text-primary border border-primary/30">
+            ULTRA HQ
+          </span>
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors text-lg" data-icon="high_definition">cloud_download</span>
+</div>
+<div class="h-24 w-full rounded mb-3 overflow-hidden relative border border-outline-variant/20 bg-surface-container-lowest">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" data-alt="A cinematic widescreen gaming visual inspired by Cyberpunk 2077, featuring an illuminated neon futuristic cityscape with deep black shadows, volumetric cyan fog, high-contrast reflections, and sleek aerodynamic vehicles under a rainy night sky in a sharp, technological cyber aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBJivJMRBPQZEbzUwfHmqTZh_mJol2lkatojqiUPSyz2RZohHBMTnvDwjBDg4E9cz4XaLMCxxQdk7_JQe2ysu1rJAPqluiZfhkkYVb-rQiseChqOR2yhbhRSJ03qfvJeo-l62gukMfaKC52T_R59xtAsr3gTI7Wv2nmANi3mCwbCib6fvrM2woohq8DaYjkUOD389xULhofcLnb0lQ-POsYL7YMPFvDW3MY_ZjVdyh_1C2EQhp6lqW8ZpP04zldu0Ce1v0WrAXlEth-"/>
+<div class="absolute inset-0 bg-gradient-to-t from-surface-container-lowest via-transparent to-transparent"></div>
+</div>
+<div>
+<h3 class="text-label-md font-code-telemetry text-on-surface font-semibold group-hover:text-primary transition-colors leading-tight">Steam Remote Play</h3>
+<p class="text-body-sm font-body-sm text-on-surface-variant mt-0.5">1080p 60FPS High Def</p>
+<div class="mt-2.5 pt-2 border-t border-outline-variant/20 flex justify-between items-center text-label-sm font-code-telemetry text-on-surface-variant">
+<span>65 Mbps</span>
+<span class="text-primary font-bold">L: 5.8ms</span>
+</div>
+</div>
+</article>
+<!-- Card 2: 720p 60FPS Native (RECOMMENDED - ACTIVE FOCUS) -->
+<article class="group relative rounded-lg bg-surface-container-low border-2 border-primary bg-surface-container-high/90 focus-ring-cyan transition-all duration-200 overflow-hidden flex flex-col justify-between p-3.5 cursor-pointer shadow-[0_0_16px_rgba(0,210,255,0.2)]">
+<div class="flex justify-between items-start mb-3">
+<span class="px-2 py-0.5 rounded text-label-sm font-code-telemetry font-bold bg-secondary/20 text-secondary border border-secondary/40">
+            RECOMMENDED
+          </span>
+<span class="material-symbols-outlined text-primary text-lg" data-icon="fit_screen">fit_screen</span>
+</div>
+<div class="h-24 w-full rounded mb-3 overflow-hidden relative border border-outline-variant/20 bg-surface-container-lowest">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" data-alt="An atmospheric fantasy action RPG gaming screenshot evocative of Elden Ring, featuring a brooding armored warrior gazing across vast dark ruins illuminated by a luminous spectral golden and cyan spectral erd-tree light with volumetric mist and dramatic dark ambient lighting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCELXfQ_M8iXHNYzrOyK0DvbOHRk9LKkYhz6H73pf1ZoBsldL857naRIrEDxAYMS3HDyuQ84q8ZFp9q2OQnsOKd3xBjop-naw93mfeWt2k6OG12mEB1pu5jB0NPuGYOH4lHnlPZ49pHoVeEi6hUPrvmmbF8iUU3B2jqX8tb9yS_tqNzFu3M1fSca7vYn_p4DUroY9nLmLdjV_QE9mIkvlyXgpb_XtAnVvemkdSY56GA3pZeHhXEHltLAqq_b-gbX2GfDiIsd96pM2OF"/>
+<div class="absolute inset-0 bg-gradient-to-t from-surface-container-lowest via-transparent to-transparent"></div>
+</div>
+<div>
+<h3 class="text-label-md font-code-telemetry text-primary font-bold leading-tight">Steam Remote Play</h3>
+<p class="text-body-sm font-body-sm text-on-surface mt-0.5">720p 60FPS Native</p>
+<div class="mt-2.5 pt-2 border-t border-outline-variant/30 flex justify-between items-center text-label-sm font-code-telemetry text-on-surface">
+<span>45 Mbps</span>
+<span class="text-secondary font-bold">L: 4.2ms</span>
+</div>
+</div>
+</article>
+<!-- Card 3: 480p 30FPS Low Power -->
+<article class="group relative rounded-lg bg-surface-container-low/80 border border-outline-variant/30 hover:border-primary/60 hover:bg-surface-container-high transition-all duration-200 overflow-hidden flex flex-col justify-between p-3.5 cursor-pointer">
+<div class="flex justify-between items-start mb-3">
+<span class="px-2 py-0.5 rounded text-label-sm font-code-telemetry font-bold bg-surface-container-highest text-on-surface-variant border border-outline-variant/40">
+            6.5H BATTERY
+          </span>
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors text-lg" data-icon="battery_saver">battery_saver</span>
+</div>
+<div class="h-24 w-full rounded mb-3 overflow-hidden relative border border-outline-variant/20 bg-surface-container-lowest">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" data-alt="A stylized rogue-like dungeon adventure game scene resembling Hades II, bathed in ethereal neon turquoise and spectral green underworld flames, sharp hand-drawn geometric character silhouettes, and dynamic atmospheric particulate embers in an obsidian stone chamber." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB5uUUu7LrcqyYH9cpBrEoQAieSANZNSXDGf2wSgQUkYcn5juvWOQHNEhYe_VJ0Eu1h9-1YwdgRdXVASCxWeKgH88SxuWler1n2IB1lKaobXih0qB57Zfo6dWZ5j31xugra3g8DEyOpl6eQ6lpJ3s_5w4bEF7pyhCUWqQsoZgPD1BY3v-62-c9FIfUzeK2LNPhjaum1iVu9Qmjc6xN9Z6fNw_4499C7w5GpmpOvXQPtVEx9oDGKQ8eHOxlCeECvTQ_3UlJMQPasZ5va"/>
+<div class="absolute inset-0 bg-gradient-to-t from-surface-container-lowest via-transparent to-transparent"></div>
+</div>
+<div>
+<h3 class="text-label-md font-code-telemetry text-on-surface font-semibold group-hover:text-primary transition-colors leading-tight">Battery Saver Stream</h3>
+<p class="text-body-sm font-body-sm text-on-surface-variant mt-0.5">480p 30FPS Low Power</p>
+<div class="mt-2.5 pt-2 border-t border-outline-variant/20 flex justify-between items-center text-label-sm font-code-telemetry text-on-surface-variant">
+<span>18 Mbps</span>
+<span class="text-on-surface-variant">5.5W APU</span>
+</div>
+</div>
+</article>
+<!-- Card 4: PortMaster Native PC Ports -->
+<article class="group relative rounded-lg bg-surface-container-low/80 border border-outline-variant/30 hover:border-primary/60 hover:bg-surface-container-high transition-all duration-200 overflow-hidden flex flex-col justify-between p-3.5 cursor-pointer">
+<div class="flex justify-between items-start mb-3">
+<span class="px-2 py-0.5 rounded text-label-sm font-code-telemetry font-bold bg-tertiary-container/20 text-tertiary border border-tertiary/30">
+            STANDALONE
+          </span>
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors text-lg" data-icon="terminal">terminal</span>
+</div>
+<div class="h-24 w-full rounded mb-3 overflow-hidden relative border border-outline-variant/20 bg-surface-container-lowest">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" data-alt="An intricate high-resolution retro pixel art platformer showcase featuring crisp mountain peaks, snow particle physics, vivid luminescent blue crystals, and deep indigo twilight skies in a polished indie video game aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD1TFuKvN687bDkJRixtCvixjqCsnotknCRIzf_v4YnO9UjGIumFtRRga2FEB1muxr1sbPxLGjYycX7Klj0JXi7H0T4yPKiphsNdpRQEDw1NIzVeFkLDU-1-VZET2L_3ThVHmhmr6NeycsmE2QJfW8uo1FtQp1HQDiFKbColbGCqdmxeuLzxvb2n3yt_fOGlWS6t8vwTNnQTw20IrD9X-LYoqsW_TeApIGuQSKh7J9PXG9JJOUZmlrR8aLjk_25IcdJEMfOjmhfuWID"/>
+<div class="absolute inset-0 bg-gradient-to-t from-surface-container-lowest via-transparent to-transparent"></div>
+</div>
+<div>
+<h3 class="text-label-md font-code-telemetry text-on-surface font-semibold group-hover:text-primary transition-colors leading-tight">PortMaster Native Ports</h3>
+<p class="text-body-sm font-body-sm text-on-surface-variant mt-0.5">Celeste, TMNT, Half-Life</p>
+<div class="mt-2.5 pt-2 border-t border-outline-variant/20 flex justify-between items-center text-label-sm font-code-telemetry text-on-surface-variant">
+<span>ARM64 ELF</span>
+<span class="text-secondary font-bold">Offline OK</span>
+</div>
+</div>
+</article>
+<!-- Card 5: Steam Link Settings & Calibrate -->
+<article class="group relative rounded-lg bg-surface-container-low/80 border border-outline-variant/30 hover:border-primary/60 hover:bg-surface-container-high transition-all duration-200 overflow-hidden flex flex-col justify-between p-3.5 cursor-pointer">
+<div class="flex justify-between items-start mb-3">
+<span class="px-2 py-0.5 rounded text-label-sm font-code-telemetry font-bold bg-surface-container-highest text-on-surface-variant border border-outline-variant/40">
+            CONFIG
+          </span>
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors text-lg" data-icon="tune">tune</span>
+</div>
+<div class="h-24 w-full rounded mb-3 overflow-hidden relative border border-outline-variant/20 bg-surface-container-lowest flex items-center justify-center bg-gradient-to-br from-surface-container to-surface-container-lowest">
+<div class="p-3 rounded-full bg-surface-container-high border border-outline-variant/40">
+<span class="material-symbols-outlined text-3xl text-primary" data-icon="settings_input_component">settings_input_component</span>
+</div>
+</div>
+<div>
+<h3 class="text-label-md font-code-telemetry text-on-surface font-semibold group-hover:text-primary transition-colors leading-tight">Steam Link Settings</h3>
+<p class="text-body-sm font-body-sm text-on-surface-variant mt-0.5">Audio, Bitrate &amp; Deadzones</p>
+<div class="mt-2.5 pt-2 border-t border-outline-variant/20 flex justify-between items-center text-label-sm font-code-telemetry text-on-surface-variant">
+<span>Diagnostics</span>
+<span class="text-primary font-bold">Profile A</span>
+</div>
+</div>
+</article>
+</div>
+</main>
+<!-- ================= BOTTOM NAV BAR / CONTROLLER ACTION BAR (Shared Component Execution) ================= -->
+<footer class="fixed bottom-0 left-0 w-full z-50 flex justify-end items-center gap-6 px-6 py-2.5 h-12 bg-surface-container-lowest/90 dark:bg-surface-container-lowest/90 backdrop-blur-md shadow-lg">
+<!-- (A) LAUNCH (Active Selected Button) -->
+<div class="flex items-center gap-2 text-primary font-code-telemetry px-2 py-1 rounded bg-surface-container-high/60 border border-primary/40 shadow-[0_0_12px_rgba(0,210,255,0.25)]">
+<span class="material-symbols-outlined text-base" data-icon="play_circle">play_circle</span>
+<span class="text-label-md font-label-md uppercase tracking-wider">(A) LAUNCH</span>
+</div>
+<!-- (B) BACK -->
+<div class="flex items-center gap-2 text-on-surface-variant font-code-telemetry px-2 py-1 hover:text-on-surface transition-colors cursor-pointer">
+<span class="material-symbols-outlined text-base" data-icon="cancel">cancel</span>
+<span class="text-label-md font-label-md uppercase tracking-wider">(B) BACK</span>
+</div>
+<!-- (X) RES / FPS -->
+<div class="flex items-center gap-2 text-on-surface-variant font-code-telemetry px-2 py-1 hover:text-on-surface transition-colors cursor-pointer">
+<span class="material-symbols-outlined text-base" data-icon="speed">speed</span>
+<span class="text-label-md font-label-md uppercase tracking-wider">(X) RES / FPS</span>
+</div>
+<!-- (Y) BATTERY SAVER -->
+<div class="flex items-center gap-2 text-on-surface-variant font-code-telemetry px-2 py-1 hover:text-on-surface transition-colors cursor-pointer">
+<span class="material-symbols-outlined text-base" data-icon="battery_saver">battery_saver</span>
+<span class="text-label-md font-label-md uppercase tracking-wider">(Y) BATTERY SAVER</span>
+</div>
+<!-- (MENU) OVERLAY -->
+<div class="flex items-center gap-2 text-on-surface-variant font-code-telemetry px-2 py-1 hover:text-on-surface transition-colors cursor-pointer">
+<span class="material-symbols-outlined text-base" data-icon="menu">menu</span>
+<span class="text-label-md font-label-md uppercase tracking-wider">(MENU) OVERLAY</span>
+</div>
+</footer>
+</body></html>
