@@ -30,17 +30,6 @@ jobs:
           TAG="${{ github.event.inputs.tag_name || github.ref_name }}"
           echo "BUILD_VERSION=${TAG#v}" >> $GITHUB_ENV
 
-      - name: Install 7-Zip
-        run: |
-          mkdir -p "$RUNNER_TEMP/tools"
-          wget https://www.7-zip.org/a/7z2301-linux-x64.tar.xz -P "$RUNNER_TEMP/tools"
-          tar xvf "$RUNNER_TEMP/tools/7z2301-linux-x64.tar.xz" -C "$RUNNER_TEMP/tools"
-          sudo cp "$RUNNER_TEMP/tools/7zz" /usr/local/bin/
-
-      - name: Extract RetroArch cores
-        run: |
-          find "${{ github.workspace }}/RetroArch/.retroarch/cores" -name "*.7z" -execdir 7zz x {} \; -execdir rm {} \;
-
       - name: Cleaning image...
         run: |
           find "${{ github.workspace }}" -type f -name ".gitkeep" -delete
@@ -49,19 +38,18 @@ jobs:
           rm -f "${{ github.workspace }}/README.md"
           rm -rf "${{ github.workspace }}/.git"
           rm -rf "${{ github.workspace }}/.github"
-          cd "${{ github.workspace }}"
-          /usr/local/bin/7zz a RetroArch/default_config.7z RetroArch/retroarch.cfg RetroArch/.retroarch/config/*
 
       - name: Zipping release
         run: |
           shopt -s dotglob
           cd "${{ github.workspace }}"
-          zip -r "$RUNNER_TEMP/CrossMix-OS_v${{ env.BUILD_VERSION }}.zip" ./*
+          zip -9 -r "$RUNNER_TEMP/CrossMix-OS_v${{ env.BUILD_VERSION }}.zip" ./*
+          ls -lh "$RUNNER_TEMP/CrossMix-OS_v${{ env.BUILD_VERSION }}.zip"
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
-          name: "CrossMix-OS v${{ env.BUILD_VERSION }}"
+          name: "CrossMix-OS Steam Edition v${{ env.BUILD_VERSION }}"
           tag_name: ${{ github.event.inputs.tag_name || github.ref_name }}
           prerelease: false
           draft: false

@@ -179,9 +179,6 @@ if [ "$version" != "$FW_patched_version" ]; then
         "/mnt/SDCARD/Apps/SystemTools/Menu/USER INTERFACE##START TAB (value)/Tab Game.sh" -s
     fi
 
-    # Displaying only Emulators with roms
-    /mnt/SDCARD/Apps/EmuCleaner/launch.sh -s
-
     ################ Flash boot logo ################
     if [ "$CrossMix_Update" = "0" ]; then
 

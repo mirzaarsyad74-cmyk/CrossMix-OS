@@ -1,0 +1,21 @@
+{
+  "label": "STEAM",
+  "icon": "/mnt/SDCARD/Icons/Default/Apps/SteamLink.png",
+  "iconsmall": "",
+  "iconlist": "",
+  "background": "",
+  "themecolor": "1b2838",
+  "launch": "launch.sh",
+  "rompath": "../../Roms/STEAM",
+  "imgpath": "../../Imgs/STEAM",
+  "useswap": 1,
+  "shortname": 0,
+  "hidebios": 1,
+  "extlist": "sh",
+  "launchlist": [
+    {
+      "name": "High Performance",
+      "launch": "launch.sh"
+    }
+  ]
+}

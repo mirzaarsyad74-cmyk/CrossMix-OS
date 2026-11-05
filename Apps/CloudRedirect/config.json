@@ -1,0 +1,6 @@
+{
+  "label": "CloudRedirect",
+  "icon": "icon.png",
+  "launch": "launch.sh",
+  "description": "Cloud & PC Game Streaming Redirector for Steam / Moonlight"
+}
