@@ -28,3 +28,4 @@ if [ -w "/tmp/trimui_osd/osd_toast_ms2" ]; then
 elif [ -e "/tmp/trimui_osd/osd_toast_ms2" ]; then
     echo -e "$VOL_MSG_JSON" > /tmp/trimui_osd/osd_toast_ms2
 fi
+
