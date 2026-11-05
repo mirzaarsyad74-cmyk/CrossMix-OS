@@ -33,8 +33,8 @@ jobs:
       - name: Install 7-Zip
         run: |
           mkdir -p "$RUNNER_TEMP/tools"
-          wget https://www.7-zip.org/a/7z2406-linux-x64.tar.xz -P "$RUNNER_TEMP/tools"
-          tar xvf "$RUNNER_TEMP/tools/7z2406-linux-x64.tar.xz" -C "$RUNNER_TEMP/tools"
+          wget https://www.7-zip.org/a/7z2301-linux-x64.tar.xz -P "$RUNNER_TEMP/tools"
+          tar xvf "$RUNNER_TEMP/tools/7z2301-linux-x64.tar.xz" -C "$RUNNER_TEMP/tools"
           sudo cp "$RUNNER_TEMP/tools/7zz" /usr/local/bin/
 
       - name: Extract RetroArch cores
