@@ -17,42 +17,46 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
+
       - name: Get version
         run: |
           TAG="${{ github.ref_name }}"
           echo "BUILD_VERSION=${TAG#v}" >> $GITHUB_ENV
+
       - name: Install 7-Zip
         run: |
-          mkdir -p /home/runner/work/CrossMix-OS/tools
-          wget https://www.7-zip.org/a/7z2406-linux-x64.tar.xz -P /home/runner/work/CrossMix-OS/tools
-          tar xvf /home/runner/work/CrossMix-OS/tools/7z2406-linux-x64.tar.xz -C /home/runner/work/CrossMix-OS/tools
-          sudo cp /home/runner/work/CrossMix-OS/tools/7zz /usr/local/bin/
+          mkdir -p "$RUNNER_TEMP/tools"
+          wget https://www.7-zip.org/a/7z2406-linux-x64.tar.xz -P "$RUNNER_TEMP/tools"
+          tar xvf "$RUNNER_TEMP/tools/7z2406-linux-x64.tar.xz" -C "$RUNNER_TEMP/tools"
+          sudo cp "$RUNNER_TEMP/tools/7zz" /usr/local/bin/
+
       - name: Extract RetroArch cores
         run: |
-          find /home/runner/work/CrossMix-OS/CrossMix-OS/RetroArch/.retroarch/cores -name "*.7z" -execdir 7zz x {} \; -execdir rm {} \;
+          find "${{ github.workspace }}/RetroArch/.retroarch/cores" -name "*.7z" -execdir 7zz x {} \; -execdir rm {} \;
+
       - name: Cleaning image...
         run: |
-          find /home/runner/work/CrossMix-OS/CrossMix-OS -type f -name ".gitkeep" -delete
-          rm -rf /home/runner/work/CrossMix-OS/CrossMix-OS/_assets
-          rm /home/runner/work/CrossMix-OS/CrossMix-OS/LICENSE
-          rm /home/runner/work/CrossMix-OS/CrossMix-OS/README.md
-          ls -la /home/runner/work/CrossMix-OS/CrossMix-OS
-          rm -rf /home/runner/work/CrossMix-OS/CrossMix-OS/.git
-          rm -rf /home/runner/work/CrossMix-OS/CrossMix-OS/.github
-          ls -la /home/runner/work/CrossMix-OS/CrossMix-OS
-          cd /home/runner/work/CrossMix-OS/CrossMix-OS
+          find "${{ github.workspace }}" -type f -name ".gitkeep" -delete
+          rm -rf "${{ github.workspace }}/_assets"
+          rm -f "${{ github.workspace }}/LICENSE"
+          rm -f "${{ github.workspace }}/README.md"
+          rm -rf "${{ github.workspace }}/.git"
+          rm -rf "${{ github.workspace }}/.github"
+          cd "${{ github.workspace }}"
           /usr/local/bin/7zz a RetroArch/default_config.7z RetroArch/retroarch.cfg RetroArch/.retroarch/config/*
+
       - name: Zipping release
         run: |
           shopt -s dotglob
-          cd /home/runner/work/CrossMix-OS/CrossMix-OS
-          zip -r "/home/runner/work/CrossMix-OS/CrossMix-OS_v${{ env.BUILD_VERSION }}.zip" ./*
+          cd "${{ github.workspace }}"
+          zip -r "$RUNNER_TEMP/CrossMix-OS_v${{ env.BUILD_VERSION }}.zip" ./*
+
       - name: Create Release
-        uses: marvinpinto/action-automatic-releases@latest
+        uses: softprops/action-gh-release@v2
         with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          title: "CrossMix-OS v${{ env.BUILD_VERSION }}"
+          name: "CrossMix-OS v${{ env.BUILD_VERSION }}"
+          tag_name: ${{ github.ref_name }}
           prerelease: false
-          files: "/home/runner/work/CrossMix-OS/CrossMix-OS_v${{ env.BUILD_VERSION }}.zip"
-          draft: true
+          draft: false
+          files: "${{ runner.temp }}/CrossMix-OS_v${{ env.BUILD_VERSION }}.zip"

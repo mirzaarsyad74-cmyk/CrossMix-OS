@@ -8,6 +8,8 @@ elif [ -d "/opt/tools/PortMaster/" ]; then
   controlfolder="/opt/tools/PortMaster"
 elif [ -d "$XDG_DATA_HOME/PortMaster/" ]; then
   controlfolder="$XDG_DATA_HOME/PortMaster"
+elif [ -d "/mnt/SDCARD/Apps/PortMaster/PortMaster" ]; then
+  controlfolder="/mnt/SDCARD/Apps/PortMaster/PortMaster"
 else
   controlfolder="/roms/ports/PortMaster"
 fi
@@ -43,7 +45,7 @@ $TASKSET ./ccleste 2>&1 | $ESUDO tee -a ./log.txt
 $ESUDO kill -9 $(pidof gptokeyb)
 unset LD_LIBRARY_PATH
 unset SDL_GAMECONTROLLERCONFIG
-$ESUDO systemctl restart oga_events &
+command -v systemctl >/dev/null 2>&1 && $ESUDO systemctl restart oga_events &
 
 # Disable console
 printf "\033c" > $CUR_TTY

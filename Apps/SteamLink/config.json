@@ -1,0 +1,7 @@
+{
+  "label": "Steam Link",
+  "icon": "icon.png",
+  "iconsel": "icon.png",
+  "launch": "launch.sh",
+  "description": "Stream games directly from Steam via Remote Play."
+}

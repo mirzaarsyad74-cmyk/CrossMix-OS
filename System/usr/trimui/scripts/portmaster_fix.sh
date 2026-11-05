@@ -58,7 +58,6 @@ verify_md5() {
     local filePath="$1"
     local fileName=$(basename "$filePath")
     local md5_file="$2"
-    $(basename "$file")
 
     echo -e "${YELLOW}Checking integrity of $fileName...${NONE}"
     if [ -f "$md5_file" ]; then
@@ -121,7 +120,7 @@ echo "-------------------------------"
 if /mnt/SDCARD/System/bin/wget -q --spider https://github.com >/dev/null; then
     echo -e "${GREEN}OK${NONE}"
 else
-    echo -e "${RED}FAIL$\nError: https://github.com not reachable.${NONE}\n!!! Check your wifi connection !!!\n"
+    echo -e "${RED}FAIL${NONE}\nError: https://github.com not reachable.${NONE}\n!!! Check your wifi connection !!!\n"
     echo -e "It is possible to use this script without Wifi."
     echo -e "However for best results please enable wifi on your device.\n"
     echo -e "Press A to continue. B to quit the fix script."
@@ -165,8 +164,8 @@ echo "-----------------------------------------"
 # Variables
 PM_FixArchive="/mnt/SDCARD/System/updates/portmaster_fix.7z"
 PM_FixArchive_MD5="/mnt/SDCARD/System/updates/portmaster_fix.7z.md5"
-PM_FixArchive_URL="https://raw.githubusercontent.com/cizia64/CrossMix-OS/refs/heads/main/_assets/resources/portmaster_fix.7z"
-PM_FixArchive_MD5_URL="https://raw.githubusercontent.com/cizia64/CrossMix-OS/refs/heads/main/_assets/resources/portmaster_fix.7z.md5"
+PM_FixArchive_URL="https://raw.githubusercontent.com/mirzaarsyad74-cmyk/CrossMix-OS/refs/heads/main/_assets/resources/portmaster_fix.7z"
+PM_FixArchive_MD5_URL="https://raw.githubusercontent.com/mirzaarsyad74-cmyk/CrossMix-OS/refs/heads/main/_assets/resources/portmaster_fix.7z.md5"
 TEMP_FILE="/tmp/portmaster_fix.7z.md5"
 
 # Step 1: Download the remote MD5 file
@@ -206,8 +205,8 @@ echo "------------------------------------"
 # Variables
 Python_Archive="/mnt/SDCARD/System/updates/update_001/python.zip"
 Python_Archive_MD5="/mnt/SDCARD/System/updates/update_001/python.zip.md5"
-Python_Archive_URL="https://raw.githubusercontent.com/cizia64/CrossMix-OS/refs/heads/main/_assets/resources/python.zip"
-Python_Archive_MD5_URL="https://raw.githubusercontent.com/cizia64/CrossMix-OS/refs/heads/main/_assets/resources/python.zip.md5"
+Python_Archive_URL="https://raw.githubusercontent.com/mirzaarsyad74-cmyk/CrossMix-OS/refs/heads/main/_assets/resources/python.zip"
+Python_Archive_MD5_URL="https://raw.githubusercontent.com/mirzaarsyad74-cmyk/CrossMix-OS/refs/heads/main/_assets/resources/python.zip.md5"
 TEMP_FILE="/tmp/python.zip.md5"
 
 # Step 1: Download the remote MD5 file

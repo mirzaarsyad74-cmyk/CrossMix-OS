@@ -3,7 +3,7 @@ UPDATE_VERSION=1.0.0
 export PATH="/mnt/SDCARD/System/bin:/mnt/SDCARD/System/usr/trimui/scripts:$PATH"
 export LD_LIBRARY_PATH="/mnt/SDCARD/System/lib:/usr/trimui/lib:$LD_LIBRARY_PATH"
 
-if [ "$1" == "-v" ]; then
+if [ "$1" = "-v" ]; then
     echo -n $UPDATE_VERSION
     exit
 fi
@@ -15,7 +15,7 @@ BLUE='\033[1;34m'
 PURPLE='\033[01;35m'
 NC='\033[0m' # No Color
 
-GITHUB_REPOSITORY=cizia64/CrossMix-OS
+GITHUB_REPOSITORY=mirzaarsyad74-cmyk/CrossMix-OS
 updatedir="/mnt/SDCARD/System/updates"
 Local_CrossMixVersion="$(cat "/mnt/SDCARD/System/usr/trimui/crossmix-version.txt")"
 current_date=$(date "+%Y-%m-%d")
@@ -72,13 +72,7 @@ enable_wifi() {
     sleep 5
 
     # Start udhcpc to obtain an IP address
-    if
-        ! udhcpc -i wlan0 &
-        >/dev/null &
-    then
-        echo "Failed to start udhcpc."
-        return 1
-    fi
+    udhcpc -i wlan0 >/dev/null 2>&1 &
 
     # Verify if an IP address has been obtained
     IP=$(ip route get 1 | awk '/src/ {print $NF; exit}')
