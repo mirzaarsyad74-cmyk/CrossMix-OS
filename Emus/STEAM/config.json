@@ -1,9 +1,9 @@
 {
   "label": "STEAM",
-  "icon": "/mnt/SDCARD/Icons/Default/Apps/SteamLink.png",
+  "icon": "/mnt/SDCARD/Icons/Default/Emus/STEAM.png",
   "iconsmall": "",
   "iconlist": "",
-  "background": "",
+  "background": "/mnt/SDCARD/Backgrounds/Default/STEAM.png",
   "themecolor": "1b2838",
   "launch": "launch.sh",
   "rompath": "../../Roms/STEAM",
@@ -14,8 +14,32 @@
   "extlist": "sh",
   "launchlist": [
     {
-      "name": "High Performance",
-      "launch": "launch.sh"
+      "name": "Auto (720p @ 60 FPS - Native Recommended)",
+      "launch": "launch_auto.sh"
+    },
+    {
+      "name": "1080p (Super-Sampling 1080p @ 60 FPS)",
+      "launch": "launch_1080p.sh"
+    },
+    {
+      "name": "720p (Native 720p @ 60 FPS)",
+      "launch": "launch_720p.sh"
+    },
+    {
+      "name": "480p (Balanced 480p @ 60 FPS)",
+      "launch": "launch_480p.sh"
+    },
+    {
+      "name": "Battery Saver (480p @ 30 FPS - Power Save)",
+      "launch": "launch_battery.sh"
+    },
+    {
+      "name": "Ultra Battery Saver (320p @ 30 FPS - Max Battery)",
+      "launch": "launch_ultra_battery.sh"
+    },
+    {
+      "name": "Configure Steam Link Settings",
+      "launch": "launch_settings.sh"
     }
   ]
 }

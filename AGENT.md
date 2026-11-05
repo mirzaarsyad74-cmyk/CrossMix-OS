@@ -53,15 +53,38 @@ Therefore, **without an incremented version number, existing devices in the wild
 
 * **No Legacy Emulators**: Do not commit legacy emulator cores, ROM packs, or BIOS files (`RetroArch/`, `BIOS/`, `Best/`).
 * **Dedicated Steam Environment**:
-  * `Emus/STEAM/`: Direct launcher entry in the main games menu.
-  * `Roms/STEAM/`: Steam shortcuts and scripts.
-  * `Apps/SteamLink/`: Native ARM64 Linux Steam Remote Play client with direct framebuffer rendering and Xbox 360 controller mapping.
-  * `Apps/CloudRedirect/`: Stream hub for Steam Remote Play, Moonlight Cloud Streaming, and custom Cloud host IPs.
+  * `Emus/STEAM/`: Direct launcher entry in the main games menu with launchlist presets (Auto, 1080p, 720p, 480p, Battery Saver, Ultra Battery Saver, Settings).
+  * `Roms/STEAM/`: Steam shortcuts, resolution presets, and settings menu launcher.
+  * `Apps/SteamLink/`: Native ARM64 Linux Steam Remote Play client with direct framebuffer rendering, official Steam vector icon, 100% English UI, and TrimUI hardware button mapping.
   * `Apps/PortMaster/`: Retained for native PC game ports (e.g. Celeste).
 
 ---
 
-## 4. Hardware Management (Fast Charging & LEDs)
+## 4. Steam Link Settings & Optimization Engine
+
+* **Official Steam Branding**:
+  * Employs the authentic Valve Steam logo across `Emus/STEAM/`, `Icons/Default/Emus/STEAM.png`, `Apps/SteamLink/icon.png`, and theme icon packs.
+  * Custom dark vignette background in `Backgrounds/Default/STEAM.png` and boxart in `Imgs/STEAM/`.
+* **English Translation**:
+  * All legacy Portuguese UI strings, status toasts, pairing guidance, and button prompts are patched in-place to natural English.
+* **Controller Button Mapping (X A B Y)**:
+  * Default Xbox mapping: Bottom=A, Right=B, Left=X, Top=Y (standard for Steam and PC games).
+  * Alternate Nintendo mapping option: Physical labels (East=A, South=B, North=X, West=Y).
+  * Enforced via `Apps/SteamLink/gamecontrollerdb.txt` and exported `SDL_GAMECONTROLLERCONFIG`.
+* **Resolution & FPS Configuration**:
+  * Resolution options: `Auto` (720p), `1080p` (Super-sampled FHD), `720p` (Native 1:1), `480p` (Balanced), `320p` (Ultra Save).
+  * FPS options: `Auto` (60 FPS), `60 FPS`, `30 FPS`.
+* **Battery Saver Mode**:
+  * Throttles CPU clock to 1008 MHz with `ondemand` governor.
+  * Caps stream to 480p @ 30 FPS at 3500 kbps to minimize decode and Wi-Fi radio power.
+  * Shuts off analog stick RGB LED ring animation and dims display backlight to 40%.
+  * Restores clocks, backlight, and LEDs on exit.
+* **Interactive Configuration**:
+  * Built-in on-screen GUI menu `Apps/SteamLink/configure.sh` using TrimUI `infoscreen.sh`.
+
+---
+
+## 5. Hardware Management (Fast Charging & LEDs)
 
 * **PMIC**: X-Powers AXP2202.
 * **Fast Charging (2.0A / 10W)**:
@@ -72,3 +95,4 @@ Therefore, **without an incremented version number, existing devices in the wild
   * Electric Cyan (`#00E5FF`) stick ring breathing pulse via `/sys/class/led_anim/`.
 * **Thermal Protection**:
   * Automatically throttles current back to 1.2A if battery temperature exceeds $43^\circ\text{C}$.
+
