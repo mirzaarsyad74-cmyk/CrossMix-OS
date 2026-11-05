@@ -50,7 +50,14 @@ fi
     echo "${MEM_FREE} MB Free / ${MEM_TOTAL} MB"
     echo
     echo "level: ${BAT_LEVEL}: ${BAT_CAPACITY}% - ${BAT_VOLT}v"
-    echo -n "${BAT_STATUS}"
-    [ "$STATUS" = "Charging" ] && echo -n ":${BAT_CURRENT_A}A/h - ${BAT_TIME_MIN}mn"
+    if [ "$BAT_STATUS" = "Charging" ]; then
+        if [ "$BAT_CURRENT_mA" -ge 1800 ]; then
+            echo -n "⚡ Fast Charging:${BAT_CURRENT_A}A - ${BAT_TIME_MIN}mn"
+        else
+            echo -n "Charging:${BAT_CURRENT_A}A - ${BAT_TIME_MIN}mn"
+        fi
+    else
+        echo -n "${BAT_STATUS}"
+    fi
     echo -e "\nhealth: ${BAT_HEALTH}"
 } > "$OUTFILE"

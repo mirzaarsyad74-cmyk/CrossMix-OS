@@ -176,9 +176,14 @@ if [ ! -f "/mnt/SDCARD/trimui/app/cmd_to_run.sh" ]; then
 		cp "/mnt/SDCARD/Apps/Activities/launch.sh" "/mnt/SDCARD/trimui/app/cmd_to_run.sh"
 	elif [ "$StartupApp" = "Activities - Details" ]; then
 		cp "/mnt/SDCARD/Apps/Activities/launch - details.sh" "/mnt/SDCARD/trimui/app/cmd_to_run.sh"
-	elif [ "$StartupApp" = "RetroArch" ]; then
-		cp /mnt/SDCARD/Apps/RetroArch/launch.sh "/mnt/SDCARD/trimui/app/cmd_to_run.sh"
+	elif [ "$StartupApp" = "SteamLink" ]; then
+		cp /mnt/SDCARD/Apps/SteamLink/launch.sh "/mnt/SDCARD/trimui/app/cmd_to_run.sh"
 	fi
+fi
+
+# Launch Fast Charging & Animation Daemon (AXP2202 2.0A Turbo)
+if [ -x "/mnt/SDCARD/System/usr/trimui/scripts/fast_charge_daemon.sh" ]; then
+	/mnt/SDCARD/System/usr/trimui/scripts/fast_charge_daemon.sh &
 fi
 
 wifi_value=$(/usr/trimui/bin/systemval wifi)

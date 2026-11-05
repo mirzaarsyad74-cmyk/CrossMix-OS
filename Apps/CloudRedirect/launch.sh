@@ -32,3 +32,4 @@ if [ -x "/mnt/SDCARD/System/usr/trimui/scripts/shellect.sh" ]; then
 else
     exec /mnt/SDCARD/Apps/SteamLink/launch.sh
 fi
+
