@@ -111,3 +111,30 @@ Therefore, **without an incremented version number, existing devices in the wild
 * **Thermal Protection**:
   * Automatically throttles current back to 1.2A if battery temperature exceeds $43^\circ\text{C}$.
 
+---
+
+## 8. Dual-Tier OTA Update Architecture (Fast System Update vs Full OS & ROMs Image)
+
+The Over-The-Air (OTA) updater (`System/usr/trimui/scripts/ota_gui.py` and `Apps/OTA-update/launch.sh`) MUST ALWAYS provide an explicit dual-tier choice to the user whenever a new firmware version is available:
+
+1. **[A] Fast System Update (~15 MB, ~10 seconds)**
+   * **Target**: Active users who only need updated system scripts, Steam Link handheld client, YouTube video player, network booster, and core configurations.
+   * **Payload**: Only updated shell scripts, Python GUI engines, and ARM64 binaries (`Apps/`, `System/usr/trimui/scripts/`, `System/bin/`).
+   * **Execution**: Synchronized via high-speed GitHub raw streaming (`update.sh`), completing in ~10 seconds and eliminating the need to re-download 960+ MB of static ROMs and emulators.
+
+2. **[X] Full OS & ROMs Archive (~962 MB, Complete Image)**
+   * **Target**: Users performing a fresh reinstall, system repair, or upgrading the entire RetroArch emulator collection, cores, base roms, media, and themes.
+   * **High-Speed C-Native Download Engine**:
+     * **Native Subprocess**: Must use compiled `curl-aarch64` / `curl` in a dedicated background subprocess instead of single-threaded Python `urllib`.
+     * **Mandatory HTTP Byte-Range Resume (`-C -`)**: Auto-resumes from existing `.tmp` bytes so no download progress is lost if interrupted.
+     * **16MB Kernel TCP Buffers**: Configures `net.core.rmem_max=16777216` and `net.ipv4.tcp_rmem` for high-speed WAN throughput.
+     * **Wi-Fi Power Save Disabled**: Explicitly executes `iw dev wlan0 set power_save off` and `iwconfig wlan0 power off` to prevent 802.11 sleep throttling.
+     * **CPU Performance Governor**: Locks CPU to 1.6 GHz (`performance` governor) during download and verification.
+     * **Decoupled GUI Blitting**: GUI updates are throttled to once every 0.75s to ensure Pillow PNG compression does not starve the network socket.
+
+3. **Gamepad Controls on Update Available Screen**:
+   * `[A]` **Fast System Update**: Instant delta update (~15 MB, 10s).
+   * `[X]` **Full OS & ROMs Archive**: Complete system download (~962 MB) with resume.
+   * `[B]` **Cancel**: Abort and return to Main Menu.
+
+

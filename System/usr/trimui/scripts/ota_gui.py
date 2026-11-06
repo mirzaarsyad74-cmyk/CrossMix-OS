@@ -227,18 +227,33 @@ class OtaRenderer:
         # Stats rows
         stats = [
             ("Installed Version", f"v{current_ver}", COLOR_TEXT_MUTED),
-            ("Package Size", f"{release_info.get('size_mb', 960)} MB", COLOR_TEXT_PRIMARY),
             ("Release Date", str(release_info.get('date', 'Today')), COLOR_TEXT_PRIMARY),
-            ("Release Channel", "Official Stable (Main)", COLOR_GREEN_ACCENT),
             ("SD Card Storage", f"{release_info.get('free_mb', 22400)} MB Free (OK)", COLOR_GREEN_ACCENT),
         ]
 
-        row_y = ly + 130
+        row_y = ly + 115
         for lbl, val, val_col in stats:
             draw.line([lx + 30, row_y, lx + lw - 30, row_y], fill=(24, 32, 46), width=1)
-            draw.text((lx + 30, row_y + 12), lbl, font=font_label, fill=COLOR_TEXT_MUTED)
-            draw.text((lx + lw - 30, row_y + 10), val, font=font_val, fill=val_col, anchor="ra")
-            row_y += 50
+            draw.text((lx + 30, row_y + 10), lbl, font=font_label, fill=COLOR_TEXT_MUTED)
+            draw.text((lx + lw - 30, row_y + 8), val, font=font_val, fill=val_col, anchor="ra")
+            row_y += 42
+
+        # Dual-Tier Update Mode Selection Cards
+        draw.line([lx + 30, row_y, lx + lw - 30, row_y], fill=(24, 32, 46), width=1)
+        draw.text((lx + 30, row_y + 16), "SELECT UPDATE MODE:", font=font_badge, fill=COLOR_CYAN_ACCENT)
+
+        box_w = lw - 60
+        # Mode 1: Fast System Update (A)
+        b1_y = row_y + 40
+        draw.rounded_rectangle([lx + 30, b1_y, lx + 30 + box_w, b1_y + 68], radius=10, fill=(13, 32, 44), outline=COLOR_CYAN_ACCENT, width=2)
+        draw.text((lx + 46, b1_y + 12), "[A] Fast System Update (~15 MB)", font=self.fm.get(15, bold=True), fill=COLOR_CYAN_ACCENT)
+        draw.text((lx + 46, b1_y + 36), "SteamOS, Steam Link, YouTube, OTA & configs (10s)", font=self.fm.get(12, bold=False), fill=COLOR_TEXT_PRIMARY)
+
+        # Mode 2: Full OS & ROMs (X)
+        b2_y = b1_y + 78
+        draw.rounded_rectangle([lx + 30, b2_y, lx + 30 + box_w, b2_y + 68], radius=10, fill=(18, 22, 32), outline=COLOR_CARD_BORDER, width=1)
+        draw.text((lx + 46, b2_y + 12), "[X] Full OS & ROMs Archive (~962 MB)", font=self.fm.get(15, bold=True), fill=COLOR_TEXT_PRIMARY)
+        draw.text((lx + 46, b2_y + 36), "Complete image with all RetroArch emus & cores", font=self.fm.get(12, bold=False), fill=COLOR_TEXT_MUTED)
 
         # Right Card: Changelog Content
         draw.text((rx + 30, ry + 25), "WHAT'S NEW IN THIS VERSION", font=font_badge, fill=COLOR_GREEN_ACCENT)
@@ -263,9 +278,9 @@ class OtaRenderer:
             cy_text += 36
 
         # Footer Actions
-        self.draw_footer_pill(draw, 50, 660, "A", "Quick Patch (15 MB, 10s)", primary=True)
-        self.draw_footer_pill(draw, 420, 660, "X", "Full OS Image (962 MB)")
-        self.draw_footer_pill(draw, 780, 660, "B", "Cancel")
+        self.draw_footer_pill(draw, 50, 660, "A", "Fast System Update (~15 MB)", primary=True)
+        self.draw_footer_pill(draw, 440, 660, "X", "Full OS & ROMs (~962 MB)")
+        self.draw_footer_pill(draw, 810, 660, "B", "Cancel")
         return canvas
 
     def draw_downloading(self, new_ver, total_bytes, downloaded_bytes, speed_mbps, eta_str):
