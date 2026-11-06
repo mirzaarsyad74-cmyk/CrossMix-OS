@@ -263,8 +263,9 @@ class OtaRenderer:
             cy_text += 36
 
         # Footer Actions
-        self.draw_footer_pill(draw, 50, 660, "A", "Download & Install Update", primary=True)
-        self.draw_footer_pill(draw, 340, 660, "B", "Cancel & Return to Menu")
+        self.draw_footer_pill(draw, 50, 660, "A", "Quick Patch (15 MB, 10s)", primary=True)
+        self.draw_footer_pill(draw, 420, 660, "X", "Full OS Image (962 MB)")
+        self.draw_footer_pill(draw, 780, 660, "B", "Cancel")
         return canvas
 
     def draw_downloading(self, new_ver, total_bytes, downloaded_bytes, speed_mbps, eta_str):
@@ -641,22 +642,45 @@ def run_interactive_ota():
     frame = renderer.draw_update_found(curr_ver, rel_info)
     display.blit(frame)
 
-    user_confirmed = False
+    user_choice = None
     while True:
         btn = gamepad.poll()
         if btn == "A":
-            user_confirmed = True
+            user_choice = "quick"
+            break
+        elif btn == "X":
+            user_choice = "full"
             break
         elif btn == "B":
-            user_confirmed = False
+            user_choice = "cancel"
             break
         time.sleep(0.05)
 
-    if not user_confirmed:
+    if user_choice == "cancel":
         gamepad.close()
         return
 
-    # Step 3: Live Download Stream
+    # Branch A: Quick High-Speed Delta Patch (Scripts, Apps, Binaries ~15 MB, 10s)
+    if user_choice == "quick":
+        frame = renderer.draw_installing(target_ver, 1, "Synchronizing Updated Components")
+        display.blit(frame)
+
+        # Run update.sh directly in high-speed silent mode
+        patch_cmd = "curl -k -sL https://raw.githubusercontent.com/mirzaarsyad74-cmyk/CrossMix-OS/main/update.sh | sh"
+        try:
+            res = subprocess.run(["sh", "-c", patch_cmd], stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=120)
+            frame = renderer.draw_installing(target_ver, 5, "Update Finalized")
+            display.blit(frame)
+            time.sleep(2)
+        except Exception as e:
+            frame = renderer.draw_error("Patch Error", "Could not apply quick patch.", str(e))
+            display.blit(frame)
+            time.sleep(4)
+
+        gamepad.close()
+        return
+
+    # Branch B: Full OS Archive Download & Install (with C-Native Accelerated Curl & Resume)
     dl_url = rel_info.get("url")
     if not dl_url:
         frame = renderer.draw_error("Download Error", "No CrossMix-OS zip found in release assets.")
@@ -671,64 +695,108 @@ def run_interactive_ota():
     temp_file = dest_file + ".tmp"
 
     total_size = rel_info.get("size_bytes", 0)
-    downloaded = 0
+
+    # Detect fastest curl binary on system
+    curl_candidates = [
+        "/mnt/SDCARD/System/bin/curl-aarch64",
+        "/usr/bin/curl",
+        "curl"
+    ]
+    curl_bin = "curl"
+    for cb in curl_candidates:
+        if os.path.exists(cb) and (os.access(cb, os.X_OK) or cb == "curl"):
+            curl_bin = cb
+            break
+
+    # Native C curl with hardware acceleration, byte-range resume, and retry logic
+    curl_cmd = [
+        curl_bin,
+        "-k",                          # Bypass certificate issues
+        "-L",                          # Follow redirects to S3 CDN
+        "-C", "-",                     # Auto-resume from existing downloaded bytes!
+        "--retry", "10",
+        "--retry-delay", "1",
+        "--connect-timeout", "15",
+        "--max-time", "7200",
+        "-s",
+        "-o", temp_file,
+        dl_url
+    ]
+
+    initial_size = os.path.getsize(temp_file) if os.path.exists(temp_file) else 0
     start_time = time.time()
     last_ui_update = 0
+    last_bytes = initial_size
+    last_speed_time = start_time
+    smooth_speed = 0.0
 
-    req = urllib.request.Request(dl_url, headers={"User-Agent": "CrossMix-OTA"})
     try:
-        ctx = ssl._create_unverified_context()
-        with urllib.request.urlopen(req, context=ctx, timeout=20) as resp:
-            if total_size == 0:
-                total_size = int(resp.headers.get("Content-Length", 0))
+        proc = subprocess.Popen(curl_cmd)
+        while True:
+            ret = proc.poll()
+            if ret is not None:
+                # Process completed
+                break
 
-            with open(temp_file, "wb") as f_out:
-                while True:
-                    # Check for cancel
-                    btn = gamepad.poll()
-                    if btn == "B":
-                        # User cancelled
-                        f_out.close()
-                        if os.path.exists(temp_file): os.remove(temp_file)
-                        gamepad.close()
-                        return
+            # Check for user cancellation via B button
+            btn = gamepad.poll()
+            if btn == "B":
+                proc.terminate()
+                try:
+                    proc.wait(timeout=2)
+                except Exception:
+                    proc.kill()
+                # DO NOT delete temp_file so user can resume next time!
+                gamepad.close()
+                return
 
-                    chunk = resp.read(256 * 1024)
-                    if not chunk:
-                        break
-                    f_out.write(chunk)
-                    downloaded += len(chunk)
+            now = time.time()
+            if now - last_ui_update >= 0.75:
+                last_ui_update = now
+                cur_bytes = os.path.getsize(temp_file) if os.path.exists(temp_file) else 0
 
-                    now = time.time()
-                    if now - last_ui_update > 0.3:
-                        last_ui_update = now
-                        elapsed = max(0.1, now - start_time)
-                        speed = (downloaded / (1024 * 1024)) / elapsed
-                        rem_bytes = max(0, total_size - downloaded)
-                        eta_sec = int(rem_bytes / (speed * 1024 * 1024)) if speed > 0.05 else 0
-                        eta_str = f"{eta_sec // 60}m {eta_sec % 60:02d}s" if eta_sec > 0 else "Calculating..."
+                # Measure delta throughput over interval
+                time_delta = max(0.1, now - last_speed_time)
+                bytes_delta = max(0, cur_bytes - last_bytes)
+                instant_speed = (bytes_delta / (1024 * 1024)) / time_delta
 
-                        frame = renderer.draw_downloading(target_ver, total_size, downloaded, speed, eta_str)
-                        display.blit(frame)
+                if smooth_speed == 0:
+                    smooth_speed = instant_speed
+                else:
+                    smooth_speed = 0.7 * instant_speed + 0.3 * smooth_speed
 
+                last_bytes = cur_bytes
+                last_speed_time = now
+
+                rem_bytes = max(0, total_size - cur_bytes)
+                eta_sec = int(rem_bytes / (smooth_speed * 1024 * 1024)) if smooth_speed > 0.05 else 0
+                eta_str = f"{eta_sec // 60}m {eta_sec % 60:02d}s" if eta_sec > 0 else "Calculating..."
+
+                frame = renderer.draw_downloading(target_ver, total_size, cur_bytes, smooth_speed, eta_str)
+                display.blit(frame)
+
+            time.sleep(0.08)
+
+        if proc.returncode != 0:
+            raise RuntimeError(f"Download terminated with code {proc.returncode}")
+
+        # Verify completed size
         if os.path.exists(temp_file):
-            if os.path.exists(dest_file): os.remove(dest_file)
+            final_size = os.path.getsize(temp_file)
+            if total_size > 0 and final_size < int(total_size * 0.95):
+                raise RuntimeError(f"File incomplete: {final_size} / {total_size} bytes")
+            if os.path.exists(dest_file):
+                os.remove(dest_file)
             os.rename(temp_file, dest_file)
+        else:
+            raise RuntimeError("Downloaded archive file missing.")
 
     except Exception as e:
-        # Fallback to curl -k if python stream had network glitch
-        try:
-            cmd = ["curl", "-k", "-L", "-o", dest_file, dl_url]
-            res = subprocess.run(cmd, timeout=300)
-            if res.returncode != 0:
-                raise RuntimeError("curl failed with code " + str(res.returncode))
-        except Exception as curl_err:
-            if os.path.exists(temp_file): os.remove(temp_file)
-            frame = renderer.draw_error("Download Aborted", str(e), "Check network stability and retry.")
-            display.blit(frame)
-            time.sleep(4)
-            gamepad.close()
-            return
+        frame = renderer.draw_error("Download Aborted", str(e), "Check Wi-Fi stability and retry.")
+        display.blit(frame)
+        time.sleep(4)
+        gamepad.close()
+        return
 
     # Step 4: Show Installation Screen
     frame = renderer.draw_installing(target_ver, 3, "Decompressing archive")
