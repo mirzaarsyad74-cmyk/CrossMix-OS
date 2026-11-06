@@ -10,7 +10,7 @@ REPO_RAW="https://raw.githubusercontent.com/mirzaarsyad74-cmyk/CrossMix-OS/main"
 
 echo "=================================================="
 echo " SteamOS Handheld Edition - Live Hotfix Updater"
-echo " Target Version: v1.4.8"
+echo " Target Version: v1.4.9"
 echo "=================================================="
 
 # Check network connectivity

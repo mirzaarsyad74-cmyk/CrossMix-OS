@@ -111,7 +111,7 @@ def main():
             (f"Video Bitrate: {btr_lbl}", "Adjust bandwidth for connection quality", btr_lbl),
             (f"Image Sharpness: {sharp_lbl}", "Toggle pixel-perfect crispness vs smooth scaling", "SHARP" if cfg.get("SHARP_MODE") == "1" else "SMOOTH"),
             (f"Battery Saver: {eco_lbl}", "Underclock CPU to 1.0 GHz & turn off LED rings", "ECO" if cfg.get("BATTERY_SAVER") == "1" else "PERF"),
-            (f"Custom Host IP: {host_lbl}", "Set PC IP for playing outside local Wi-Fi (VPN/Tailscale)", "IP"),
+            (f"Custom Host IP: {host_lbl}", "Optional manual PC IP on local network (Leave empty for Auto)", "IP"),
             ("Clear Pairing Data (Repair Device)", "Delete device.json to pair with a new host PC", "RESET"),
             ("Save & Return to Steam Link Hub", "All changes are applied immediately", "SAVE")
         ]

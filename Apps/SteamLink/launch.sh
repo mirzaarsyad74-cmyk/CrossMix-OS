@@ -256,12 +256,27 @@ export SSL_CERT_FILE="$APP_DIR/cacert.pem"
 
 chmod +x "$APP_DIR/steamlink" 2>/dev/null
 
-# Clean up all background framebuffer display holders before launching exclusive SDL2 engine
+# Clean up all background framebuffer display holders and background daemons before launching exclusive SDL2 engine
+pkill -9 -f tailscaled 2>/dev/null
+pkill -9 -f infoscreen 2>/dev/null
 pkill -9 -f sdl2imgshow 2>/dev/null
 pkill -9 -f presenter 2>/dev/null
 pkill -9 -f pic2fb 2>/dev/null
 pkill -9 -f steam_gui 2>/dev/null
-sleep 0.2
+
+# Clear framebuffer so no ghosted overlay boxes or tears remain on screen
+if [ -w "/dev/fb0" ]; then
+    dd if=/dev/zero of=/dev/fb0 bs=1024 count=3686 2>/dev/null
+fi
+sleep 0.1
+
+# Network & Wi-Fi optimization for stutter-free 60 FPS streaming
+command -v iw >/dev/null 2>&1 && iw dev wlan0 set power_save off 2>/dev/null
+command -v iwconfig >/dev/null 2>&1 && iwconfig wlan0 power off 2>/dev/null
+sysctl -w net.core.rmem_max=8388608 2>/dev/null
+sysctl -w net.core.wmem_max=8388608 2>/dev/null
+sysctl -w net.ipv4.tcp_rmem="4096 87380 8388608" 2>/dev/null
+sysctl -w net.core.netdev_max_backlog=5000 2>/dev/null
 
 if [ -n "$CUSTOM_HOST" ]; then
     "$APP_DIR/steamlink" --host "$CUSTOM_HOST" > "$APP_DIR/steamlink.log" 2>&1
