@@ -1,7 +1,7 @@
 {
-"label":"OTA update",
+"label":"SteamOS Update",
 "icon":"icon.png",
 "iconsel":"icon.png",
 "launch":"launch.sh",
-"description":"Update CrossMix from internet."
+"description":"Over-the-air firmware updates for SteamOS."
 }

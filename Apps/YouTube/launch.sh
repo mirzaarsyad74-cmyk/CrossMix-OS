@@ -1,197 +1,21 @@
 #!/bin/sh
-# YouTube Main Handheld UI for TrimUI Smart Pro / CrossMix-OS
-# Complete Gamepad-driven Ad-Free YouTube Browser & Player
+# SteamOS YouTube Launcher for TrimUI Smart Pro
+# Direct graphical video browser & ad-free player launcher.
 
 APP_DIR="$(cd "$(dirname "$0")" && pwd)"
-PLAY_SH="$APP_DIR/play.sh"
-SEARCH_PY="$APP_DIR/search.py"
-SETTINGS_FILE="$APP_DIR/settings.conf"
-SELECTOR="/mnt/SDCARD/System/bin/selector"
-INFOSCREEN="/mnt/SDCARD/System/usr/trimui/scripts/infoscreen.sh"
-VK="/mnt/SDCARD/System/bin/VirtualKeyboard"
-PYTHON_BIN="/mnt/SDCARD/System/bin/python3.11"
-BG_IMG="/mnt/SDCARD/System/usr/trimui/res/library_bg.png"
-[ ! -f "$BG_IMG" ] && BG_IMG="/mnt/SDCARD/trimui/res/crossmix-os/bg-plain.png"
-
-TMP_MENU="/tmp/yt_menu.txt"
-TMP_LIST="/tmp/yt_list.txt"
-TMP_SUB="/tmp/yt_sub.txt"
-
 export LD_LIBRARY_PATH="/mnt/SDCARD/System/lib:/usr/trimui/lib:$LD_LIBRARY_PATH"
 export PATH="/mnt/SDCARD/System/bin:$PATH"
 
-# 1. Check Wi-Fi connection
-IP=$(ip route get 1 2>/dev/null | awk '/src/ {print $NF; exit}')
-if [ -z "$IP" ]; then
-    [ -x "$INFOSCREEN" ] && "$INFOSCREEN" -m "Wi-Fi is not connected!\nPlease connect to Wi-Fi to watch YouTube." -t 4
-    exit 1
+# Ensure Python standard library is available
+if [ ! -f "/mnt/SDCARD/System/lib/python3.11/os.py" ] && [ -f "/mnt/SDCARD/System/updates/update_001/python.zip" ]; then
+    unzip -q -o -d "/mnt/SDCARD/System/" "/mnt/SDCARD/System/updates/update_001/python.zip" 2>/dev/null
 fi
 
-# 2. Trigger Network Booster for smooth streaming
-if [ -f "/mnt/SDCARD/Apps/NetworkBooster/boost.sh" ]; then
-    sh "/mnt/SDCARD/Apps/NetworkBooster/boost.sh" --silent >/dev/null 2>&1 &
+echo 1 > /tmp/stay_awake
+if [ -x "/mnt/SDCARD/System/bin/python3.11" ]; then
+    /mnt/SDCARD/System/bin/python3.11 "$APP_DIR/youtube_gui.py"
+else
+    python3 "$APP_DIR/youtube_gui.py"
 fi
-
-# 3. Load or initialize settings
-[ -f "$SETTINGS_FILE" ] && . "$SETTINGS_FILE"
-MAX_RES="${MAX_RES:-720}"
-SPONSOR_BLOCK="${SPONSOR_BLOCK:-1}"
-
-save_settings() {
-    cat <<EOF > "$SETTINGS_FILE"
-MAX_RES="$MAX_RES"
-SPONSOR_BLOCK="$SPONSOR_BLOCK"
-EOF
-}
-
-show_msg() {
-    if [ -x "$INFOSCREEN" ]; then
-        "$INFOSCREEN" -m "$1" -t "${2:-3}"
-    else
-        echo "$1"
-    fi
-}
-
-# Main Application Menu Loop
-while true; do
-    case "$MAX_RES" in
-        1080) Q_LBL="1080p FHD" ;;
-        720)  Q_LBL="720p Native (Sharp)" ;;
-        480)  Q_LBL="480p Balanced" ;;
-        360)  Q_LBL="360p Data Saver" ;;
-        audio) Q_LBL="Audio Only" ;;
-        *)    Q_LBL="720p Native" ;;
-    esac
-    [ "$SPONSOR_BLOCK" = "1" ] && SB_LBL="Active (Auto-Skip)" || SB_LBL="Disabled"
-
-    TITLE="YOUTUBE // AD-FREE HANDHELD // CrossMix-OS"
-    
-    cat <<EOF > "$TMP_MENU"
-Search YouTube (Keyboard)
-Trending: Gaming & Steam Deck
-Trending: Tech & Handheld Reviews
-Retro Gaming Longplays
-Enter Video URL or Video ID
-Playback Quality: $Q_LBL
-SponsorBlock: $SB_LBL
-Ad-Block Status: 100% Active (Zero Ads)
-Exit to Main Menu
-EOF
-
-    if [ -x "$SELECTOR" ]; then
-        SEL=$("$SELECTOR" -i "$BG_IMG" -t "$TITLE" -fs 125 -cf "$TMP_MENU" 2>/dev/null)
-        ACTION=$(echo "$SEL" | sed 's/^.*: //')
-    else
-        ACTION="Exit to Main Menu"
-    fi
-
-    case "$ACTION" in
-        *"Search YouTube"*)
-            SEARCH_QUERY=""
-            if [ -x "$VK" ]; then
-                VK_RAW=$("$VK" -t "Search YouTube" 2>/dev/null)
-                SEARCH_QUERY=$(echo "$VK_RAW" | grep -o '\[VKStart\].*\[VKEnd\]' | sed -e 's/\[VKStart\]//' -e 's/\[VKEnd\]//')
-            fi
-            if [ -n "$SEARCH_QUERY" ]; then
-                show_msg "Searching YouTube for:\n'$SEARCH_QUERY'\nPlease wait 3 seconds..." 2
-                "$PYTHON_BIN" "$SEARCH_PY" "$SEARCH_QUERY" 10 > "$TMP_LIST" 2>/dev/null
-                if [ -s "$TMP_LIST" ]; then
-                    echo "Back to Menu" >> "$TMP_LIST"
-                    PICK=$("$SELECTOR" -i "$BG_IMG" -t "Search: $SEARCH_QUERY" -fs 110 -cf "$TMP_LIST" 2>/dev/null)
-                    CHOICE=$(echo "$PICK" | sed 's/^.*: //')
-                    if echo "$CHOICE" | grep -q "\[ID:"; then
-                        VID_ID=$(echo "$CHOICE" | grep -o '\[ID:[^]]*\]' | sed 's/\[ID://' | sed 's/\]//')
-                        [ -n "$VID_ID" ] && sh "$PLAY_SH" "$VID_ID"
-                    fi
-                else
-                    show_msg "No results found for '$SEARCH_QUERY'." 2
-                fi
-            fi
-            ;;
-        *"Trending: Gaming"*)
-            show_msg "Loading Gaming & Steam Deck Videos...\nPlease wait 3 seconds..." 2
-            "$PYTHON_BIN" "$SEARCH_PY" --gaming 10 > "$TMP_LIST" 2>/dev/null
-            if [ -s "$TMP_LIST" ]; then
-                echo "Back to Menu" >> "$TMP_LIST"
-                PICK=$("$SELECTOR" -i "$BG_IMG" -t "Gaming & Steam Deck Videos" -fs 110 -cf "$TMP_LIST" 2>/dev/null)
-                CHOICE=$(echo "$PICK" | sed 's/^.*: //')
-                if echo "$CHOICE" | grep -q "\[ID:"; then
-                    VID_ID=$(echo "$CHOICE" | grep -o '\[ID:[^]]*\]' | sed 's/\[ID://' | sed 's/\]//')
-                    [ -n "$VID_ID" ] && sh "$PLAY_SH" "$VID_ID"
-                fi
-            else
-                show_msg "Failed to fetch videos. Check network connection." 2
-            fi
-            ;;
-        *"Trending: Tech"*)
-            show_msg "Loading Tech & Handheld Reviews...\nPlease wait 3 seconds..." 2
-            "$PYTHON_BIN" "$SEARCH_PY" --tech 10 > "$TMP_LIST" 2>/dev/null
-            if [ -s "$TMP_LIST" ]; then
-                echo "Back to Menu" >> "$TMP_LIST"
-                PICK=$("$SELECTOR" -i "$BG_IMG" -t "Tech & Handheld Reviews" -fs 110 -cf "$TMP_LIST" 2>/dev/null)
-                CHOICE=$(echo "$PICK" | sed 's/^.*: //')
-                if echo "$CHOICE" | grep -q "\[ID:"; then
-                    VID_ID=$(echo "$CHOICE" | grep -o '\[ID:[^]]*\]' | sed 's/\[ID://' | sed 's/\]//')
-                    [ -n "$VID_ID" ] && sh "$PLAY_SH" "$VID_ID"
-                fi
-            else
-                show_msg "Failed to fetch videos. Check network connection." 2
-            fi
-            ;;
-        *"Retro Gaming"*)
-            show_msg "Loading Retro Gaming Longplays...\nPlease wait 3 seconds..." 2
-            "$PYTHON_BIN" "$SEARCH_PY" --retro 10 > "$TMP_LIST" 2>/dev/null
-            if [ -s "$TMP_LIST" ]; then
-                echo "Back to Menu" >> "$TMP_LIST"
-                PICK=$("$SELECTOR" -i "$BG_IMG" -t "Retro Gaming Longplays" -fs 110 -cf "$TMP_LIST" 2>/dev/null)
-                CHOICE=$(echo "$PICK" | sed 's/^.*: //')
-                if echo "$CHOICE" | grep -q "\[ID:"; then
-                    VID_ID=$(echo "$CHOICE" | grep -o '\[ID:[^]]*\]' | sed 's/\[ID://' | sed 's/\]//')
-                    [ -n "$VID_ID" ] && sh "$PLAY_SH" "$VID_ID"
-                fi
-            else
-                show_msg "Failed to fetch videos. Check network connection." 2
-            fi
-            ;;
-        *"Enter Video URL or Video ID"*)
-            URL_INPUT=""
-            if [ -x "$VK" ]; then
-                VK_RAW=$("$VK" -t "Enter YouTube URL or Video ID" 2>/dev/null)
-                URL_INPUT=$(echo "$VK_RAW" | grep -o '\[VKStart\].*\[VKEnd\]' | sed -e 's/\[VKStart\]//' -e 's/\[VKEnd\]//')
-            fi
-            if [ -n "$URL_INPUT" ]; then
-                sh "$PLAY_SH" "$URL_INPUT"
-            fi
-            ;;
-        *"Playback Quality:"*)
-            cat <<EOF > "$TMP_SUB"
-720p Native [Razor Sharp 1280x720 - RECOMMENDED]
-1080p FHD [1920x1080 High Def]
-480p Balanced [Low Bandwidth]
-360p Data Saver
-Audio Only [Music / Podcasts]
-Back
-EOF
-            Q_PICK=$("$SELECTOR" -i "$BG_IMG" -t "Select YouTube Playback Resolution" -fs 130 -cf "$TMP_SUB" 2>/dev/null)
-            Q_CHOICE=$(echo "$Q_PICK" | sed 's/^.*: //')
-            case "$Q_CHOICE" in
-                *"720p"*)  MAX_RES="720"; save_settings ;;
-                *"1080p"*) MAX_RES="1080"; save_settings ;;
-                *"480p"*)  MAX_RES="480"; save_settings ;;
-                *"360p"*)  MAX_RES="360"; save_settings ;;
-                *"Audio"*) MAX_RES="audio"; save_settings ;;
-            esac
-            ;;
-        *"SponsorBlock:"*)
-            [ "$SPONSOR_BLOCK" = "1" ] && SPONSOR_BLOCK="0" || SPONSOR_BLOCK="1"
-            save_settings
-            ;;
-        *"Ad-Block Status:"*)
-            show_msg "YOUTUBE AD-BLOCK ENGINE:\n\nStatus: 100% ACTIVE\n\nDirect stream extraction completely bypasses and strips all YouTube advertisements (pre-roll, mid-roll, and overlay ads).\nEnjoy uninterrupted video playback!" 6
-            ;;
-        *"Exit"|*)
-            rm -f "$TMP_MENU" "$TMP_LIST" "$TMP_SUB" 2>/dev/null
-            exit 0
-            ;;
-    esac
-done
+rm -f /tmp/stay_awake
+exit 0

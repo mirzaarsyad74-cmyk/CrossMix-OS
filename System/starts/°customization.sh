@@ -1,5 +1,10 @@
 #!/bin/sh
 export LD_LIBRARY_PATH="/mnt/SDCARD/System/lib:/usr/trimui/lib:$LD_LIBRARY_PATH"
+
+# Auto-provision Python standard library if missing
+if [ ! -f "/mnt/SDCARD/System/lib/python3.11/os.py" ] && [ -f "/mnt/SDCARD/System/updates/update_001/python.zip" ]; then
+    unzip -q -o -d "/mnt/SDCARD/System/" "/mnt/SDCARD/System/updates/update_001/python.zip" 2>/dev/null
+fi
 system_json="/mnt/UDISK/system.json"
 Current_Theme=$(/usr/trimui/bin/systemval theme)
 Current_bg="$Current_Theme/skin/bg.png"
@@ -7,10 +12,14 @@ if [ ! -f "$Current_bg" ]; then
     Current_bg="/mnt/SDCARD/trimui/res/skin/transparent.png"
 fi
 
-################ CrossMix-OS Version Splashscreen ################
+################ SteamOS Boot Animation & Splashscreen ################
 
-version=$(cat /mnt/SDCARD/System/usr/trimui/crossmix-version.txt)
-/mnt/SDCARD/System/usr/trimui/scripts/infoscreen.sh -i "$Current_bg" -m "CrossMix OS v$version"
+if [ -f "/mnt/SDCARD/System/usr/trimui/scripts/steamos_boot_anim.py" ] && [ -x "/mnt/SDCARD/System/bin/python3.11" ]; then
+    /mnt/SDCARD/System/bin/python3.11 /mnt/SDCARD/System/usr/trimui/scripts/steamos_boot_anim.py 2>/dev/null
+else
+    version=$(cat /mnt/SDCARD/System/usr/trimui/crossmix-version.txt 2>/dev/null)
+    /mnt/SDCARD/System/usr/trimui/scripts/infoscreen.sh -i "$Current_bg" -m "SteamOS v$version" 2>/dev/null
+fi
 
 ################ CrossMix-OS internal storage Customization ################
 FW_patched_version=$(cat /usr/trimui/crossmix-version.txt)

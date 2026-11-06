@@ -23,18 +23,13 @@ BATTERY_SAVER="${BATTERY_SAVER:-0}"
 SHARP_MODE="${SHARP_MODE:-1}"
 BITRATE_KBPS="${BITRATE_KBPS:-15000}"
 
-# 1b. Apply Razor-Sharp / Anti-Blur Render Patch
-STEAM_BIN="$APP_DIR/steamlink"
-if [ -f "$STEAM_BIN" ]; then
-    if [ "$SHARP_MODE" = "1" ]; then
-        printf '\x30' | dd of="$STEAM_BIN" bs=1 seek=$((0x34f588)) count=1 conv=notrunc 2>/dev/null
-        export SDL_RENDER_SCALE_QUALITY=0
-        export SDL_HINT_RENDER_SCALE_QUALITY=0
-    else
-        printf '\x31' | dd of="$STEAM_BIN" bs=1 seek=$((0x34f588)) count=1 conv=notrunc 2>/dev/null
-        export SDL_RENDER_SCALE_QUALITY=1
-        export SDL_HINT_RENDER_SCALE_QUALITY=1
-    fi
+# 1b. Configure Razor-Sharp Render Quality
+if [ "$SHARP_MODE" = "1" ]; then
+    export SDL_RENDER_SCALE_QUALITY=0
+    export SDL_HINT_RENDER_SCALE_QUALITY=0
+else
+    export SDL_RENDER_SCALE_QUALITY=1
+    export SDL_HINT_RENDER_SCALE_QUALITY=1
 fi
 
 # 1c. Trigger Turbo Network Speed Booster for zero stream latency

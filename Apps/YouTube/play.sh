@@ -1,23 +1,19 @@
 #!/bin/sh
-# YouTube Video Player Launcher for TrimUI Smart Pro / CrossMix-OS
-# Plays video via MPV + yt-dlp with 100% Ad-Blocking & Handheld Controller Support
+# SteamOS YouTube Video Player Launcher for TrimUI Smart Pro
+# Plays video via MPV + yt-dlp with Handheld Controller Support
 
 APP_DIR="$(cd "$(dirname "$0")" && pwd)"
 MPV_BIN="/mnt/SDCARD/System/bin/mpv"
 YTDL_BIN="/mnt/SDCARD/System/bin/yt-dlp"
 GPTOKEYB="/mnt/SDCARD/Apps/PortMaster/PortMaster/gptokeyb2"
 GPTK_CONF="$APP_DIR/youtube.gptk"
-INFOSCREEN="/mnt/SDCARD/System/usr/trimui/scripts/infoscreen.sh"
 SETTINGS_FILE="$APP_DIR/settings.conf"
 
 export LD_LIBRARY_PATH="/mnt/SDCARD/System/lib:/usr/trimui/lib:$LD_LIBRARY_PATH"
 export PATH="/mnt/SDCARD/System/bin:$PATH"
 
 TARGET_URL="$1"
-if [ -z "$TARGET_URL" ]; then
-    [ -x "$INFOSCREEN" ] && "$INFOSCREEN" -m "Error: No video URL provided!" -t 2
-    exit 1
-fi
+[ -z "$TARGET_URL" ] && exit 1
 
 case "$TARGET_URL" in
     http*|www*) ;;
@@ -34,43 +30,38 @@ case "$MAX_RES" in
     720)  YTDL_FMT="bestvideo[height<=720]+bestaudio/best[height<=720]/best" ;;
     480)  YTDL_FMT="bestvideo[height<=480]+bestaudio/best[height<=480]/best" ;;
     360)  YTDL_FMT="bestvideo[height<=360]+bestaudio/best[height<=360]/best" ;;
-    audio) YTDL_FMT="bestaudio/best" ;;
     *)    YTDL_FMT="bestvideo[height<=720]+bestaudio/best[height<=720]/best" ;;
 esac
-
-YTDL_RAW="sponsorblock-mark=all"
-[ "$SPONSOR_BLOCK" = "1" ] && YTDL_RAW="sponsorblock-mark=all,sponsorblock-remove=sponsor"
-
-# Show splash
-[ -x "$INFOSCREEN" ] && "$INFOSCREEN" -m "Connecting to YouTube...\nFetching Ad-Free Stream...\nPlease wait 2 seconds." -t 2 &
 
 echo 1 > /tmp/stay_awake
 touch /var/trimui_inputd/sticks_disabled
 
 # Start controller mapping daemon
+GPTO_PID=""
 if [ -x "$GPTOKEYB" ] && [ -f "$GPTK_CONF" ]; then
     killall -9 gptokeyb2 2>/dev/null
     "$GPTOKEYB" "mpv" -c "$GPTK_CONF" &
     GPTO_PID=$!
 fi
 
-# Launch MPV with native SDL2 video output and ad-free stream extraction
-"$MPV_BIN" \
-    --vo=sdl,gpu \
-    --ao=alsa,sdl \
-    --ytdl=yes \
-    --ytdl-path="$YTDL_BIN" \
-    --script-opts="ytdl_hook-ytdl_path=$YTDL_BIN" \
-    --ytdl-format="$YTDL_FMT" \
-    --ytdl-raw-options="$YTDL_RAW" \
-    --hwdec=auto \
-    --fs \
-    --force-window=immediate \
-    --keep-open=no \
-    --osd-level=1 \
-    --osd-font-size=24 \
-    --title="YouTube Ad-Free Player" \
-    "$TARGET_URL"
+# Launch MPV with native SDL2 video output
+if [ -x "$MPV_BIN" ]; then
+    "$MPV_BIN" \
+        --vo=sdl,gpu \
+        --ao=alsa,sdl \
+        --ytdl=yes \
+        --ytdl-path="$YTDL_BIN" \
+        --script-opts="ytdl_hook-ytdl_path=$YTDL_BIN" \
+        --ytdl-format="$YTDL_FMT" \
+        --hwdec=auto \
+        --fs \
+        --force-window=immediate \
+        --keep-open=no \
+        --osd-level=1 \
+        --osd-font-size=24 \
+        --title="SteamOS YouTube Player" \
+        "$TARGET_URL"
+fi
 
 # Cleanup
 [ -n "$GPTO_PID" ] && kill -9 "$GPTO_PID" 2>/dev/null

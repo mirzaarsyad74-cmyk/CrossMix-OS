@@ -84,7 +84,22 @@ Therefore, **without an incremented version number, existing devices in the wild
 
 ---
 
-## 5. Hardware Management (Fast Charging & LEDs)
+## 6. Mandatory Rule: Always Provide Real Native Dynamic GUI (No Raw ASCII / No Fake Static Mockups)
+
+* **Always Build Real Graphical Interfaces (GUI)**:
+  Every user-facing application, setup wizard, updater, or configuration tool must provide a **100% native graphical user interface**.
+* **Zero Raw Terminal / ASCII Usage**:
+  Never expose raw command-line consoles, terminal emulators (`SimpleTerminal`), or text-mode ASCII box scripts (`shellect.sh`) to the user. All background operations (`wget`, `curl`, `7z`, `fsck`) must be silenced (`>/dev/null 2>&1` or logged to disk) while a high-fidelity graphical UI displays real-time progress.
+* **Strict Ban on Baked-in Static Mockups**:
+  Never bake fake dynamic UI elements (such as static progress bars, fake download speeds, fake percentage numbers, or fake changelogs) directly into background image files (`.png`).
+  * Background images must only be clean, unadorned obsidian canvas frames.
+  * All titles, version numbers, progress bars, percentages, metrics, and button badges must be rendered **dynamically at runtime** via the native Python framebuffer engine (`pic2fb` / `/dev/fb0`) or TrimUI SDL2 dialog engines (`presenter` / `selector`).
+* **Gamepad Navigation**:
+  All GUIs must support direct gamepad controls (`D-Pad`, `A` to Confirm, `B` to Cancel/Back, `X`/`Y` for Secondary Actions) without requiring physical keyboards.
+
+---
+
+## 7. Hardware Management (Fast Charging & LEDs)
 
 * **PMIC**: X-Powers AXP2202.
 * **Fast Charging (2.0A / 10W)**:
