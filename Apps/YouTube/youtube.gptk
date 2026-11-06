@@ -1,0 +1,38 @@
+[controls]
+
+# Gamepad to Keyboard Mapping for MPV Video Playback
+# TrimUI Smart Pro Handheld Controls
+
+back = q
+start = enter
+guide = o
+
+# Action Buttons
+a = space
+b = q
+x = o
+y = v
+
+# Shoulders (Volume Control)
+l1 = 9
+r1 = 0
+l2 = [
+r2 = ]
+
+# D-Pad (Navigation & Seeking)
+up = up
+down = down
+left = left
+right = right
+
+# Left Analog Stick (Seeking)
+left_analog_up = up
+left_analog_down = down
+left_analog_left = left
+left_analog_right = right
+
+# Right Analog Stick (Volume & OSD)
+right_analog_up = 0
+right_analog_down = 9
+right_analog_left = left
+right_analog_right = right

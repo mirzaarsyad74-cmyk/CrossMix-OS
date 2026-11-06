@@ -108,6 +108,11 @@ wifi_workaround() {
 	else
 		echo "[INFO] IP address already present on wlan0."
 	fi
+	# Trigger Network Speed Booster if auto-boost is enabled
+	if [ -f "/mnt/SDCARD/Apps/NetworkBooster/autoboost.enabled" ]; then
+		sh /mnt/SDCARD/Apps/NetworkBooster/boost.sh --silent &
+	fi
+
 	if [ "$CheckUpdate" -eq 1 ]; then
 		/mnt/SDCARD/System/usr/trimui/scripts/update_notification.sh &
 	fi

@@ -1,0 +1,6 @@
+{
+    "label": "YouTube",
+    "icon": "icon.png",
+    "launch": "launch.sh",
+    "description": "Ad-Free YouTube Video Player & Search"
+}

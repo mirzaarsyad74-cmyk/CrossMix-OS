@@ -1,0 +1,6 @@
+{
+    "label": "Steam Settings",
+    "icon": "icon.png",
+    "launch": "launch.sh",
+    "description": "Configure Steam Link Resolution, Sharpness & Quality"
+}

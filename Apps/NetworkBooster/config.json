@@ -1,0 +1,6 @@
+{
+    "label": "Network Booster",
+    "icon": "icon.png",
+    "launch": "launch.sh",
+    "description": "Turbo Low-Latency Wi-Fi & TCP Booster"
+}

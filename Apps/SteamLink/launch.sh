@@ -16,10 +16,32 @@ if [ -f "$SETTINGS_FILE" ]; then
     . "$SETTINGS_FILE"
 fi
 
-RESOLUTION="${RESOLUTION:-auto}"
-FPS="${FPS:-auto}"
+RESOLUTION="${RESOLUTION:-720}"
+FPS="${FPS:-60}"
 LAYOUT="${LAYOUT:-xbox}"
 BATTERY_SAVER="${BATTERY_SAVER:-0}"
+SHARP_MODE="${SHARP_MODE:-1}"
+BITRATE_KBPS="${BITRATE_KBPS:-15000}"
+
+# 1b. Apply Razor-Sharp / Anti-Blur Render Patch
+STEAM_BIN="$APP_DIR/steamlink"
+if [ -f "$STEAM_BIN" ]; then
+    if [ "$SHARP_MODE" = "1" ]; then
+        printf '\x30' | dd of="$STEAM_BIN" bs=1 seek=$((0x34f588)) count=1 conv=notrunc 2>/dev/null
+        export SDL_RENDER_SCALE_QUALITY=0
+        export SDL_HINT_RENDER_SCALE_QUALITY=0
+    else
+        printf '\x31' | dd of="$STEAM_BIN" bs=1 seek=$((0x34f588)) count=1 conv=notrunc 2>/dev/null
+        export SDL_RENDER_SCALE_QUALITY=1
+        export SDL_HINT_RENDER_SCALE_QUALITY=1
+    fi
+fi
+
+# 1c. Trigger Turbo Network Speed Booster for zero stream latency
+BOOSTER="/mnt/SDCARD/Apps/NetworkBooster/boost.sh"
+if [ -f "$BOOSTER" ]; then
+    sh "$BOOSTER" --silent >/dev/null 2>&1 &
+fi
 
 # 2. Parse command-line override arguments
 for arg in "$@"; do
@@ -75,33 +97,33 @@ fi
 TARGET_W=1280
 TARGET_H=720
 TARGET_FPS=60
-TARGET_BITRATE=12000
+TARGET_BITRATE="${BITRATE_KBPS:-15000}"
 
 case "$RESOLUTION" in
     1080)
         TARGET_W=1920
         TARGET_H=1080
-        TARGET_BITRATE=18000
+        TARGET_BITRATE=20000
         ;;
     720)
         TARGET_W=1280
         TARGET_H=720
-        TARGET_BITRATE=12000
+        TARGET_BITRATE="${BITRATE_KBPS:-15000}"
         ;;
     480)
         TARGET_W=854
         TARGET_H=480
-        TARGET_BITRATE=5000
+        TARGET_BITRATE=6000
         ;;
     320)
         TARGET_W=568
         TARGET_H=320
-        TARGET_BITRATE=2500
+        TARGET_BITRATE=3000
         ;;
     auto|*)
         TARGET_W=1280
         TARGET_H=720
-        TARGET_BITRATE=12000
+        TARGET_BITRATE="${BITRATE_KBPS:-15000}"
         ;;
 esac
 
