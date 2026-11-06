@@ -87,6 +87,27 @@ if [ -z "$IP" ]; then
     exit 1
 fi
 
+# 3b. Tailscale auto-detection — if PC is on a different network, use Tailscale tunnel
+# If CUSTOM_HOST is not set, check if tailscale is running and try to find the PC's Tailscale IP
+if [ -z "$CUSTOM_HOST" ]; then
+    # Check if tailscale is available and running
+    TS_IP=""
+    if command -v tailscale >/dev/null 2>&1; then
+        # Get the list of tailscale peers that have "steam" in hostname or are tagged
+        TS_STATUS=$(tailscale status 2>/dev/null)
+        # Look for a Windows/PC peer (usually shows as hostname)
+        TS_IP=$(echo "$TS_STATUS" | grep -v "^#" | grep -v "$(tailscale ip 2>/dev/null)" | \
+                awk 'NR>1 {print $1}' | head -n 1)
+    fi
+    # If we found a Tailscale peer and our own IP is a Tailscale IP (100.x.x.x),
+    # the network routes through tailscale — set CUSTOM_HOST to discovered peer
+    MY_TS_IP=$(tailscale ip 2>/dev/null | head -n 1)
+    if [ -n "$MY_TS_IP" ] && [ -n "$TS_IP" ]; then
+        CUSTOM_HOST="$TS_IP"
+        echo "Tailscale peer detected: $CUSTOM_HOST" >> "$APP_DIR/steamlink.log"
+    fi
+fi
+
 # 4. Resolve Resolution & FPS values
 # TrimUI Smart Pro native resolution: 1280x720 @ 60Hz
 TARGET_W=1280
