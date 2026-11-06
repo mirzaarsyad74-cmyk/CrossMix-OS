@@ -10,8 +10,16 @@ export LD_LIBRARY_PATH="/mnt/SDCARD/System/lib:/usr/trimui/lib:$LD_LIBRARY_PATH"
 export LANG="en_US.UTF-8"
 export LC_ALL="en_US.UTF-8"
 
-# 1. Load persisted configuration
+# 1. Live-pull settings.conf from GitHub on every launch (silent, background-safe)
 SETTINGS_FILE="$APP_DIR/settings.conf"
+SETTINGS_URL="https://raw.githubusercontent.com/mirzaarsyad74-cmyk/CrossMix-OS/main/Apps/SteamLink/settings.conf"
+_NEW_CONF=$(curl -k -sf --max-time 5 "$SETTINGS_URL" 2>/dev/null)
+if [ -n "$_NEW_CONF" ]; then
+    echo "$_NEW_CONF" > "$SETTINGS_FILE"
+fi
+unset _NEW_CONF
+
+# Load settings (live-updated or cached)
 if [ -f "$SETTINGS_FILE" ]; then
     . "$SETTINGS_FILE"
 fi
