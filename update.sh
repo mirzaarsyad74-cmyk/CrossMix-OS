@@ -10,7 +10,7 @@ REPO_RAW="https://raw.githubusercontent.com/mirzaarsyad74-cmyk/CrossMix-OS/main"
 
 echo "=================================================="
 echo " SteamOS Handheld Edition - Live Hotfix Updater"
-echo " Target Version: v1.4.4"
+echo " Target Version: v1.4.8"
 echo "=================================================="
 
 # Check network connectivity
@@ -51,7 +51,6 @@ dl "Apps/OTA-update/launch.sh"
 dl "Apps/SteamLink/steamlink"
 dl "Apps/SteamLink/launch.sh"
 dl "Apps/SteamLink/settings.conf"
-dl "Apps/SteamLink/device.json"
 dl "Apps/SteamLink/steam_gui.py"
 dl "Apps/SteamLink/steam_gui.sh"
 dl "Apps/SteamLink/configure.sh"

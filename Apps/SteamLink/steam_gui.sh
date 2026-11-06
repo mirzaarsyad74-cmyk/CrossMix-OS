@@ -20,10 +20,6 @@ curl -k -s -m 3 "$RAW_URL/settings.conf" -o "$APP_DIR/settings.conf.tmp" 2>/dev/
 if [ -s "$APP_DIR/settings.conf.tmp" ]; then
     mv -f "$APP_DIR/settings.conf.tmp" "$APP_DIR/settings.conf"
 fi
-curl -k -s -m 3 "$RAW_URL/device.json" -o "$APP_DIR/device.json.tmp" 2>/dev/null
-if [ -s "$APP_DIR/device.json.tmp" ]; then
-    mv -f "$APP_DIR/device.json.tmp" "$APP_DIR/device.json"
-fi
 
 if [ -x "/mnt/SDCARD/System/bin/python3.11" ]; then
     /mnt/SDCARD/System/bin/python3.11 "$APP_DIR/steam_gui.py"
