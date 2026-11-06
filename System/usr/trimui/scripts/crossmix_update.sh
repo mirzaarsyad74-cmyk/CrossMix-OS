@@ -56,21 +56,35 @@ sync
 LOG_FILE="/mnt/SDCARD/_Updates/CrossMix_v${update_version}_${timestamp}.log"
 exec > >(tee -a "$LOG_FILE") 2>&1
 
-# echo "==============  Updating CrossMix-OS v$Local_CrossMixVersion to v$update_version  =============="
-echo "${BLUE}======  Updating CrossMix-OS v$Local_CrossMixVersion to v$update_version  ======${NC}"
+HUD_IMG="/mnt/SDCARD/System/usr/trimui/res/ota_update_bg.png"
+FONT="/mnt/SDCARD/System/resources/DejaVuSans.ttf"
+HUD_PID=""
+
+show_hud() {
+    local text="$1"
+    if [ -n "$HUD_PID" ]; then
+        kill -9 "$HUD_PID" 2>/dev/null
+        pkill -f sdl2imgshow 2>/dev/null
+    fi
+    if [ -f "$HUD_IMG" ] && [ -x "/mnt/SDCARD/System/bin/sdl2imgshow" ]; then
+        /mnt/SDCARD/System/bin/sdl2imgshow -i "$HUD_IMG" -f "$FONT" -s 28 -c "0,255,200" -t "$text" >/dev/null 2>&1 &
+        HUD_PID=$!
+    fi
+}
+
+show_hud "Installing CrossMix-OS v$update_version\nChecking storage space & filesystem..."
 
 check_available_space "5000"
-    if [ $? -eq 1 ]; then
-        echo -ne "${YELLOW}"
-        read -n 1 -s -r -p "Press A to exit"
-        exit 3
-    fi
+if [ $? -eq 1 ]; then
+    show_hud "Error: Insufficient storage space!\nNeed at least 5000 MB free on SD Card."
+    sleep 4
+    exit 3
+fi
 
 check_filesystem
 
-echo "${BLUE}==============          Creating backup of old files...           ==============${NC}"
+show_hud "Installing CrossMix-OS v$update_version\nBacking up files to:\n$(basename "$BCK_DIR")..."
 
-echo "Destination directory: $BCK_DIR"
 # Execute the move_items function
 move_items
 
@@ -78,23 +92,18 @@ move_items
 mv "$BCK_DIR/RetroArch/.retroarch/system/"* "/mnt/SDCARD/BIOS" 2>/dev/null
 sync
 
-echo "${BLUE}=============  Decompressing new CrossMix archive, please wait...  =============${NC}"
-# Install CrossMix new version
-echo "CrossMix archive decompression lasts at least 4 minutes."
-echo -e "\n\n     !!!!!! Please be patient  !!!!!! \n\n"
-/tmp/7zz x -aoa "$UPDATE_FILE" -o"/mnt/SDCARD"
+show_hud "Installing CrossMix-OS v$update_version\nDecompressing system archive (approx 2-3 mins)...\nPlease do not power off your console."
+
+# Install CrossMix new version quietly into log file
+/tmp/7zz x -aoa "$UPDATE_FILE" -o"/mnt/SDCARD" >>"$LOG_FILE" 2>&1
+extract_code=$?
 sync
 
-if [ $? -eq 0 ]; then
-  echo -e "${GREEN}CrossMix v$update_version extraction successful.${NC}"
-  # infoscreen.sh -m "CrossMix v$update_version extraction successful."
-  mv "$UPDATE_FILE" "/mnt/SDCARD/_Updates"
-else
-  echo -ne "${RED}CrossMix v$update_version extraction encountered errors.${NC}\n"
-  # infoscreen.sh -m "CrossMix v$update_version extraction encountered errors." -t 5
+if [ $extract_code -eq 0 ]; then
+    mv "$UPDATE_FILE" "/mnt/SDCARD/_Updates" 2>/dev/null
 fi
 
-echo "${BLUE}=====================  Restoring saves and savestates...  =====================${NC}"
+show_hud "Installing CrossMix-OS v$update_version\nMigrating saves and game configurations..."
 
 # Restore saves and savestates from RetroArch (per-CORE directory layout)
 migrate_ra_flat "RetroArch saves"     "$BCK_DIR/RetroArch/.retroarch/saves"  "/mnt/SDCARD/RetroArch/.retroarch/saves"
@@ -319,25 +328,24 @@ done
 rm "/mnt/SDCARD/Best/Free Games Collection/Roms/GB/GB-Wordyl/gb-wordyl_1.0.5_mbc5_"*
 
 
-# be sure that the PortMaster python install will be triggered
-rm "/mnt/SDCARD/System/bin/python3"
+# Ensure Python runtime wrappers are executable for YouTube and system tools
+chmod +x /mnt/SDCARD/System/bin/python3* /mnt/SDCARD/System/bin/yt-dlp* 2>/dev/null
 
 # be sure that some CrossMix apps are refreshed
-rm /mnt/SDCARD/Apps/SystemTools/Menu/Menu_cache7.db
-rm /mnt/SDCARD/Apps/Scraper/Menu/Menu_cache7.db
+rm -f /mnt/SDCARD/Apps/SystemTools/Menu/Menu_cache7.db
+rm -f /mnt/SDCARD/Apps/Scraper/Menu/Menu_cache7.db
 
 # remove old led scripts (CrossMix 1.3.5 now uses SmartLed)
-rm "/mnt/SDCARD/System/etc/led_config.sh"
+rm -f "/mnt/SDCARD/System/etc/led_config.sh"
 
-echo "${BLUE}============== Installation completed, rebooting in 10 seconds... ==============${NC}"
-
+show_hud "CrossMix-OS v$update_version Installed Successfully!\nRebooting into system..."
 
 echo ondemand >/sys/devices/system/cpu/cpu0/cpufreq/scaling_governor
 echo 1008000 >/sys/devices/system/cpu/cpu0/cpufreq/scaling_min_freq
 echo 1008000 >/sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq
-rm /tmp/stay_awake
+rm -f /tmp/stay_awake
 sync
-sleep 10
+sleep 3
 
 if [ -f /mnt/SDCARD/System/bin/shutdown ]; then
   /mnt/SDCARD/System/bin/shutdown -r
