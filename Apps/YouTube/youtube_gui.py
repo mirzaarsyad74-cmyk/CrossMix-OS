@@ -74,6 +74,31 @@ def main():
     display = DisplayEngine()
     gamepad = Gamepad()
 
+    # Network check: Verify if Wi-Fi has an assigned IP
+    try:
+        res = subprocess.run(["ip", "route", "get", "1"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, timeout=2)
+        has_wifi = bool(res.stdout and "src" in res.stdout)
+    except Exception:
+        has_wifi = True
+
+    if not has_wifi:
+        canvas, draw = renderer.create_canvas()
+        renderer.draw_top_bar(draw, "YOUTUBE", "OFFLINE WARNING")
+        cx, cy, cw, ch = 200, 180, 880, 360
+        draw.rounded_rectangle([cx, cy, cx + cw, cy + ch], radius=16, fill=COLOR_CARD_BG, outline=COLOR_CARD_BORDER, width=2)
+        draw.line([cx + 30, cy, cx + 180, cy], fill=(255, 179, 0), width=3)
+        draw.text((cx + cw // 2, cy + 120), "Wi-Fi is Not Connected!", font=renderer.fonts.get(26, bold=True), fill=(255, 179, 0), anchor="mm")
+        draw.text((cx + cw // 2, cy + 180), "Please connect your TrimUI to Wi-Fi in Main Settings to watch YouTube.", font=renderer.fonts.get(16, bold=False), fill=COLOR_TEXT_PRIMARY, anchor="mm")
+        renderer.draw_bottom_bar(draw, [("B", "Exit to Main Menu", True)])
+        display.blit(canvas)
+        while True:
+            btn = gamepad.poll()
+            if btn in ("B", "A", "START", "MENU"):
+                break
+            time.sleep(0.05)
+        gamepad.close()
+        return
+
     max_res, sponsor = load_settings()
     res_modes = ["720", "1080", "480", "360"]
     selected_idx = 0

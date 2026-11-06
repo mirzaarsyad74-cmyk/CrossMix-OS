@@ -79,6 +79,11 @@ class DisplayEngine:
     """High-speed blitter that puts frames on the hardware LCD screen."""
     def __init__(self):
         self.pic2fb = "/mnt/SDCARD/System/bin/pic2fb"
+        if os.path.exists(self.pic2fb):
+            try:
+                os.chmod(self.pic2fb, 0o755)
+            except Exception:
+                pass
         self.has_pic2fb = os.path.exists(self.pic2fb) and os.access(self.pic2fb, os.X_OK)
         self.fb0 = "/dev/fb0"
         self.has_fb0 = os.path.exists(self.fb0)
@@ -104,66 +109,85 @@ class DisplayEngine:
 
 
 class Gamepad:
-    """Robust non-blocking multi-device event listener for TrimUI Smart Pro controller."""
+    """TrimUI Smart Pro Hardware Gamepad Event Listener (/dev/input/event3)."""
     def __init__(self):
-        self.fds = []
-        for i in range(8):
-            node = f"/dev/input/event{i}"
-            if os.path.exists(node):
+        # TrimUI Smart Pro joypad is at /dev/input/event3
+        self.device_nodes = ["/dev/input/event3", "/dev/input/event2", "/dev/input/event1", "/dev/input/event0"]
+        self.fd = None
+        for n in self.device_nodes:
+            if os.path.exists(n):
                 try:
-                    fd = os.open(node, os.O_RDONLY | os.O_NONBLOCK)
-                    self.fds.append(fd)
+                    self.fd = os.open(n, os.O_RDONLY | os.O_NONBLOCK)
+                    # Flush any stale button presses from launcher
+                    self._flush()
+                    break
                 except Exception:
-                    pass
+                    continue
+        self.last_poll_time = 0
+        self.debounce_sec = 0.12
+
+    def _flush(self):
+        """Discards queued input events from before the application opened."""
+        if self.fd is None:
+            return
+        try:
+            while True:
+                r, _, _ = select.select([self.fd], [], [], 0)
+                if not r:
+                    break
+                os.read(self.fd, 24 * 32)
+        except Exception:
+            pass
 
     def poll(self):
         """Returns single key event 'A', 'B', 'X', 'Y', 'UP', 'DOWN', 'LEFT', 'RIGHT', 'START', 'SELECT', 'MENU'."""
-        if not self.fds:
+        if self.fd is None:
             return None
+
+        now = time.time()
+        if now - self.last_poll_time < self.debounce_sec:
+            return None
+
         EVENT_SZ = 24
         try:
-            readable, _, _ = select.select(self.fds, [], [], 0)
-            for fd in readable:
-                data = os.read(fd, EVENT_SZ * 16)
-                for i in range(0, len(data), EVENT_SZ):
-                    chunk = data[i:i + EVENT_SZ]
-                    if len(chunk) < EVENT_SZ:
-                        continue
-                    _, _, ev_type, ev_code, ev_val = struct.unpack("qqHHi", chunk)
-                    # EV_KEY (1)
-                    if ev_type == 1 and ev_val == 1:
-                        if ev_code in (305, 1): return "A"
-                        if ev_code in (304, 2): return "B"
-                        if ev_code in (307, 3): return "Y"
-                        if ev_code in (308, 4): return "X"
-                        if ev_code in (315, 297): return "START"
-                        if ev_code in (314, 296): return "SELECT"
-                        if ev_code in (316, 139): return "MENU"
-                        if ev_code in (103, 544): return "UP"
-                        if ev_code in (108, 545): return "DOWN"
-                        if ev_code in (105, 546): return "LEFT"
-                        if ev_code in (106, 547): return "RIGHT"
-                    # EV_ABS (3)
-                    elif ev_type == 3:
-                        # D-Pad HAT (16/17) or Analog Y (1)
-                        if ev_code in (17, 1):
-                            if ev_val < -100 or ev_val == -1: return "UP"
-                            elif ev_val > 100 or ev_val == 1: return "DOWN"
-                        # D-Pad HAT (16) or Analog X (0)
-                        elif ev_code in (16, 0):
-                            if ev_val < -100 or ev_val == -1: return "LEFT"
-                            elif ev_val > 100 or ev_val == 1: return "RIGHT"
+            r, _, _ = select.select([self.fd], [], [], 0)
+            if not r:
+                return None
+            data = os.read(self.fd, EVENT_SZ * 16)
+            for i in range(0, len(data), EVENT_SZ):
+                chunk = data[i:i + EVENT_SZ]
+                if len(chunk) < EVENT_SZ:
+                    continue
+                _, _, ev_type, ev_code, ev_val = struct.unpack("qqHHi", chunk)
+                # EV_KEY (1), Key Down (1)
+                if ev_type == 1 and ev_val == 1:
+                    self.last_poll_time = now
+                    if ev_code == 305: return "A"
+                    if ev_code == 304: return "B"
+                    if ev_code == 307: return "Y"
+                    if ev_code == 308: return "X"
+                    if ev_code == 315: return "START"
+                    if ev_code == 314: return "SELECT"
+                    if ev_code == 316: return "MENU"
+                # EV_ABS (3), D-Pad HAT & Left Analog
+                elif ev_type == 3:
+                    if ev_code == 17:  # D-PAD Y
+                        if ev_val == -1: self.last_poll_time = now; return "UP"
+                        if ev_val == 1:  self.last_poll_time = now; return "DOWN"
+                    elif ev_code == 16: # D-PAD X
+                        if ev_val == -1: self.last_poll_time = now; return "LEFT"
+                        if ev_val == 1:  self.last_poll_time = now; return "RIGHT"
         except Exception:
             pass
         return None
 
     def close(self):
-        for fd in self.fds:
+        if self.fd is not None:
             try:
-                os.close(fd)
+                os.close(self.fd)
             except Exception:
                 pass
-        self.fds.clear()
+            self.fd = None
 
 
 class SteamOSRenderer:

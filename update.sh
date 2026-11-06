@@ -48,15 +48,18 @@ dl "System/usr/trimui/crossmix-version.txt"
 dl "Apps/OTA-update/launch.sh"
 
 # Update Steam Link Handheld App
+dl "Apps/SteamLink/steamlink"
 dl "Apps/SteamLink/launch.sh"
 dl "Apps/SteamLink/steam_gui.py"
 dl "Apps/SteamLink/steam_gui.sh"
 dl "Apps/SteamLink/configure.sh"
 dl "Apps/SteamLink/configure_gui.py"
 
-# Update YouTube App
+# Update YouTube App & Video Engine
+dl "System/bin/yt-dlp"
 dl "Apps/YouTube/launch.sh"
 dl "Apps/YouTube/youtube_gui.py"
+dl "Apps/YouTube/search.py"
 dl "Apps/YouTube/play.sh"
 
 # Update Network Booster App
@@ -77,3 +80,4 @@ if [ -x "/mnt/SDCARD/System/usr/trimui/scripts/infoscreen.sh" ]; then
 fi
 
 exit 0
+

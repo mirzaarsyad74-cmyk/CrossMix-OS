@@ -13,6 +13,10 @@ def search_youtube(query, count=8):
     python_bin = "/mnt/SDCARD/System/bin/python3.11"
     ytdl_bin = "/mnt/SDCARD/System/bin/yt-dlp.py"
     
+    env = os.environ.copy()
+    env["PYTHONPATH"] = f"/mnt/SDCARD/System/lib/python3.11:/mnt/SDCARD/System/lib/python3.11/site-packages:{env.get('PYTHONPATH', '')}"
+    env["LD_LIBRARY_PATH"] = f"/mnt/SDCARD/System/lib:/usr/trimui/lib:{env.get('LD_LIBRARY_PATH', '')}"
+
     if os.path.exists(python_bin) and os.path.exists(ytdl_bin):
         cmd = [python_bin, ytdl_bin, "--flat-playlist", "--dump-json", "--no-warnings", f"ytsearch{count}:{query}"]
     elif os.path.exists("System/bin/yt-dlp.py"):
@@ -21,7 +25,7 @@ def search_youtube(query, count=8):
         cmd = ["yt-dlp", "--flat-playlist", "--dump-json", "--no-warnings", f"ytsearch{count}:{query}"]
         
     try:
-        proc = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, timeout=25)
+        proc = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, timeout=25, env=env)
     except Exception as e:
         print(f"Error querying YouTube: {e}", file=sys.stderr)
         return []
