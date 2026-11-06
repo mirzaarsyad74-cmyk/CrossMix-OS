@@ -19,7 +19,6 @@ if [ -z "$TARGET_URL" ]; then
     exit 1
 fi
 
-# If video ID was passed, prepend full URL
 case "$TARGET_URL" in
     http*|www*) ;;
     *) TARGET_URL="https://www.youtube.com/watch?v=$TARGET_URL" ;;
@@ -30,7 +29,6 @@ esac
 MAX_RES="${MAX_RES:-720}"
 SPONSOR_BLOCK="${SPONSOR_BLOCK:-1}"
 
-# Format selector based on resolution
 case "$MAX_RES" in
     1080) YTDL_FMT="bestvideo[height<=1080]+bestaudio/best[height<=1080]/best" ;;
     720)  YTDL_FMT="bestvideo[height<=720]+bestaudio/best[height<=720]/best" ;;
@@ -40,29 +38,30 @@ case "$MAX_RES" in
     *)    YTDL_FMT="bestvideo[height<=720]+bestaudio/best[height<=720]/best" ;;
 esac
 
-# SponsorBlock arguments
 YTDL_RAW="sponsorblock-mark=all"
 [ "$SPONSOR_BLOCK" = "1" ] && YTDL_RAW="sponsorblock-mark=all,sponsorblock-remove=sponsor"
 
-# Show buffering splash
+# Show splash
 [ -x "$INFOSCREEN" ] && "$INFOSCREEN" -m "Connecting to YouTube...\nFetching Ad-Free Stream...\nPlease wait 2 seconds." -t 2 &
 
-# Start controller mapping daemon
 echo 1 > /tmp/stay_awake
 touch /var/trimui_inputd/sticks_disabled
 
+# Start controller mapping daemon
 if [ -x "$GPTOKEYB" ] && [ -f "$GPTK_CONF" ]; then
     killall -9 gptokeyb2 2>/dev/null
     "$GPTOKEYB" "mpv" -c "$GPTK_CONF" &
     GPTO_PID=$!
 fi
 
-# Launch MPV with native hardware video decode and ad-free stream extraction
+# Launch MPV with native SDL2 video output and ad-free stream extraction
 "$MPV_BIN" \
+    --vo=sdl,gpu \
+    --ao=alsa,sdl \
     --ytdl=yes \
     --ytdl-path="$YTDL_BIN" \
-    --ytdl-format="$YTDL_FMT" \
     --script-opts="ytdl_hook-ytdl_path=$YTDL_BIN" \
+    --ytdl-format="$YTDL_FMT" \
     --ytdl-raw-options="$YTDL_RAW" \
     --hwdec=auto \
     --fs \

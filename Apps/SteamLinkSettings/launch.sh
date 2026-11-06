@@ -6,3 +6,4 @@ if [ -x "$APP_DIR/configure.sh" ]; then
 else
     sh "$APP_DIR/configure.sh"
 fi
+

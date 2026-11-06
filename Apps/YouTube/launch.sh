@@ -9,6 +9,7 @@ SETTINGS_FILE="$APP_DIR/settings.conf"
 SELECTOR="/mnt/SDCARD/System/bin/selector"
 INFOSCREEN="/mnt/SDCARD/System/usr/trimui/scripts/infoscreen.sh"
 VK="/mnt/SDCARD/System/bin/VirtualKeyboard"
+PYTHON_BIN="/mnt/SDCARD/System/bin/python3.11"
 BG_IMG="/mnt/SDCARD/System/usr/trimui/res/library_bg.png"
 [ ! -f "$BG_IMG" ] && BG_IMG="/mnt/SDCARD/trimui/res/crossmix-os/bg-plain.png"
 
@@ -60,11 +61,11 @@ while true; do
     [ "$SPONSOR_BLOCK" = "1" ] && SB_LBL="Active (Auto-Skip)" || SB_LBL="Disabled"
 
     TITLE="YOUTUBE // AD-FREE HANDHELD // CrossMix-OS"
-    MENU="Search Videos (Gamepad Keyboard)\n"
+    MENU="Search YouTube (Keyboard)\n"
     MENU="${MENU}Trending: Gaming & Steam Deck\n"
     MENU="${MENU}Trending: Tech & Handheld Reviews\n"
-    MENU="${MENU}Retro Gaming & Longplays\n"
-    MENU="${MENU}Enter Video URL or ID\n"
+    MENU="${MENU}Retro Gaming Longplays\n"
+    MENU="${MENU}Enter Video URL or Video ID\n"
     MENU="${MENU}Playback Quality: $Q_LBL\n"
     MENU="${MENU}SponsorBlock: $SB_LBL\n"
     MENU="${MENU}Ad-Block Status: 100% Active (Zero Ads)\n"
@@ -78,15 +79,15 @@ while true; do
     fi
 
     case "$ACTION" in
-        *"Search Videos"*)
+        *"Search YouTube"*)
             SEARCH_QUERY=""
             if [ -x "$VK" ]; then
                 VK_RAW=$("$VK" -t "Search YouTube" 2>/dev/null)
                 SEARCH_QUERY=$(echo "$VK_RAW" | grep -o '\[VKStart\].*\[VKEnd\]' | sed -e 's/\[VKStart\]//' -e 's/\[VKEnd\]//')
             fi
             if [ -n "$SEARCH_QUERY" ]; then
-                show_msg "Searching YouTube for:\n'$SEARCH_QUERY'\nPlease wait 2 seconds..." 2
-                RESULTS=$(/mnt/SDCARD/System/bin/python3.11 "$SEARCH_PY" "$SEARCH_QUERY" 10 2>/dev/null)
+                show_msg "Searching YouTube for:\n'$SEARCH_QUERY'\nPlease wait 3 seconds..." 2
+                RESULTS=$("$PYTHON_BIN" "$SEARCH_PY" "$SEARCH_QUERY" 10 2>/dev/null)
                 if [ -n "$RESULTS" ]; then
                     RESULTS="${RESULTS}\nBack to Menu"
                     PICK=$(echo -e "$RESULTS" | "$SELECTOR" -i "$BG_IMG" -t "Search: $SEARCH_QUERY" -fs 110 2>/dev/null)
@@ -101,8 +102,8 @@ while true; do
             fi
             ;;
         *"Trending: Gaming"*)
-            show_msg "Loading Gaming & Steam Deck Videos...\nPlease wait 2 seconds..." 2
-            RESULTS=$(/mnt/SDCARD/System/bin/python3.11 "$SEARCH_PY" --gaming 10 2>/dev/null)
+            show_msg "Loading Gaming & Steam Deck Videos...\nPlease wait 3 seconds..." 2
+            RESULTS=$("$PYTHON_BIN" "$SEARCH_PY" --gaming 10 2>/dev/null)
             if [ -n "$RESULTS" ]; then
                 RESULTS="${RESULTS}\nBack to Menu"
                 PICK=$(echo -e "$RESULTS" | "$SELECTOR" -i "$BG_IMG" -t "Gaming & Steam Deck Videos" -fs 110 2>/dev/null)
@@ -116,8 +117,8 @@ while true; do
             fi
             ;;
         *"Trending: Tech"*)
-            show_msg "Loading Tech & Handheld Reviews...\nPlease wait 2 seconds..." 2
-            RESULTS=$(/mnt/SDCARD/System/bin/python3.11 "$SEARCH_PY" --tech 10 2>/dev/null)
+            show_msg "Loading Tech & Handheld Reviews...\nPlease wait 3 seconds..." 2
+            RESULTS=$("$PYTHON_BIN" "$SEARCH_PY" --tech 10 2>/dev/null)
             if [ -n "$RESULTS" ]; then
                 RESULTS="${RESULTS}\nBack to Menu"
                 PICK=$(echo -e "$RESULTS" | "$SELECTOR" -i "$BG_IMG" -t "Tech & Handheld Reviews" -fs 110 2>/dev/null)
@@ -131,8 +132,8 @@ while true; do
             fi
             ;;
         *"Retro Gaming"*)
-            show_msg "Loading Retro Gaming Longplays...\nPlease wait 2 seconds..." 2
-            RESULTS=$(/mnt/SDCARD/System/bin/python3.11 "$SEARCH_PY" --retro 10 2>/dev/null)
+            show_msg "Loading Retro Gaming Longplays...\nPlease wait 3 seconds..." 2
+            RESULTS=$("$PYTHON_BIN" "$SEARCH_PY" --retro 10 2>/dev/null)
             if [ -n "$RESULTS" ]; then
                 RESULTS="${RESULTS}\nBack to Menu"
                 PICK=$(echo -e "$RESULTS" | "$SELECTOR" -i "$BG_IMG" -t "Retro Gaming Longplays" -fs 110 2>/dev/null)
@@ -145,10 +146,10 @@ while true; do
                 show_msg "Failed to fetch videos. Check network connection." 2
             fi
             ;;
-        *"Enter Video URL or ID"*)
+        *"Enter Video URL or Video ID"*)
             URL_INPUT=""
             if [ -x "$VK" ]; then
-                VK_RAW=$("$VK" -t "Enter YouTube URL or ID" 2>/dev/null)
+                VK_RAW=$("$VK" -t "Enter YouTube URL or Video ID" 2>/dev/null)
                 URL_INPUT=$(echo "$VK_RAW" | grep -o '\[VKStart\].*\[VKEnd\]' | sed -e 's/\[VKStart\]//' -e 's/\[VKEnd\]//')
             fi
             if [ -n "$URL_INPUT" ]; then
@@ -172,7 +173,7 @@ while true; do
             save_settings
             ;;
         *"Ad-Block Status:"*)
-            show_msg "YOUTUBE AD-BLOCK ENGINE:\n\nStatus: 100% ACTIVE\n\nVideo stream extraction via yt-dlp completely bypasses and strips all YouTube advertisements (pre-roll, mid-roll, and overlay ads).\nEnjoy uninterrupted video playback!" 6
+            show_msg "YOUTUBE AD-BLOCK ENGINE:\n\nStatus: 100% ACTIVE\n\nDirect stream extraction completely bypasses and strips all YouTube advertisements (pre-roll, mid-roll, and overlay ads).\nEnjoy uninterrupted video playback!" 6
             ;;
         *"Exit"|*)
             exit 0

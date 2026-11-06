@@ -1,12 +1,13 @@
 #!/bin/sh
 # Steam Link Settings Configurator for TrimUI Smart Pro / CrossMix-OS
-# Configures Resolution, Sharpness (Fix Blur), Bitrate, FPS, Controller Mapping & Battery Saver
+# Configures Resolution, Sharpness (Fix Blur), Host PC (Local/Internet), Bitrate, FPS & Battery Saver
 
 CONF_DIR="$(cd "$(dirname "$0")" && pwd)"
 SETTINGS_FILE="$CONF_DIR/settings.conf"
 STEAM_BIN="$CONF_DIR/steamlink"
 SELECTOR="/mnt/SDCARD/System/bin/selector"
 INFOSCREEN="/mnt/SDCARD/System/usr/trimui/scripts/infoscreen.sh"
+VK="/mnt/SDCARD/System/bin/VirtualKeyboard"
 BG_IMG="/mnt/SDCARD/System/usr/trimui/res/settings_bg.png"
 [ ! -f "$BG_IMG" ] && BG_IMG="/mnt/SDCARD/trimui/res/crossmix-os/bg-plain.png"
 
@@ -20,6 +21,7 @@ LAYOUT="${LAYOUT:-xbox}"
 BATTERY_SAVER="${BATTERY_SAVER:-0}"
 SHARP_MODE="${SHARP_MODE:-1}"
 BITRATE_KBPS="${BITRATE_KBPS:-15000}"
+CUSTOM_HOST="${CUSTOM_HOST:-}"
 
 save_settings() {
     cat <<EOF > "$SETTINGS_FILE"
@@ -55,7 +57,6 @@ show_info() {
 
 # Main Settings Loop
 while true; do
-    # Display labels
     case "$RESOLUTION" in
         1080) R_LBL="1080p FHD" ;;
         720)  R_LBL="720p Native (Sharpest)" ;;
@@ -68,11 +69,13 @@ while true; do
     [ "$FPS" = "30" ] && F_LBL="30 FPS (Power Saver)" || F_LBL="60 FPS (Ultra Smooth)"
     [ "$LAYOUT" = "nintendo" ] && L_LBL="Nintendo Layout" || L_LBL="Xbox Standard Layout"
     [ "$BATTERY_SAVER" = "1" ] && B_LBL="ON (Eco Mode)" || B_LBL="OFF (Performance)"
+    [ -n "$CUSTOM_HOST" ] && H_LBL="$CUSTOM_HOST (Remote / Direct)" || H_LBL="Auto-Discovery (Local Wi-Fi)"
     BTR_MBPS=$((BITRATE_KBPS / 1000))
 
     TITLE="STEAM LINK SETTINGS // CrossMix-OS"
     CHOICES="Resolution: $R_LBL"
     CHOICES="$CHOICES\nImage Sharpness: $S_LBL"
+    CHOICES="$CHOICES\nHost Connection: $H_LBL"
     CHOICES="$CHOICES\nVideo Bitrate: ${BTR_MBPS} Mbps"
     CHOICES="$CHOICES\nFramerate: $F_LBL"
     CHOICES="$CHOICES\nController Mapping: $L_LBL"
@@ -106,6 +109,35 @@ while true; do
             case "$SUB_ACT" in
                 *"Razor Sharp"*) SHARP_MODE="1"; save_settings ;;
                 *"Smooth"*)      SHARP_MODE="0"; save_settings ;;
+            esac
+            ;;
+        *"Host Connection:"*)
+            SUB_CHOICES="Auto-Discovery [Local Wi-Fi Network]\nEnter PC IP or Domain [Internet / Remote Play / Tailscale]\nClear Host IP\nBack"
+            SUB_SEL=$(echo -e "$SUB_CHOICES" | "$SELECTOR" -i "$BG_IMG" -t "Host PC Connection Mode" -fs 130 2>/dev/null)
+            SUB_ACT=$(echo "$SUB_SEL" | sed 's/^.*: //')
+            case "$SUB_ACT" in
+                *"Auto-Discovery"*)
+                    CUSTOM_HOST=""
+                    save_settings
+                    show_info "Switched to Auto-Discovery on local Wi-Fi." 2
+                    ;;
+                *"Enter PC IP"*)
+                    NEW_HOST=""
+                    if [ -x "$VK" ]; then
+                        VK_RAW=$("$VK" -t "Enter PC IP or Hostname" 2>/dev/null)
+                        NEW_HOST=$(echo "$VK_RAW" | grep -o '\[VKStart\].*\[VKEnd\]' | sed -e 's/\[VKStart\]//' -e 's/\[VKEnd\]//' | tr -d ' ')
+                    fi
+                    if [ -n "$NEW_HOST" ]; then
+                        CUSTOM_HOST="$NEW_HOST"
+                        save_settings
+                        show_info "Host set to: $CUSTOM_HOST\nWill connect directly across Internet / LAN!" 3
+                    fi
+                    ;;
+                *"Clear Host IP"*)
+                    CUSTOM_HOST=""
+                    save_settings
+                    show_info "Saved host cleared." 2
+                    ;;
             esac
             ;;
         *"Video Bitrate:"*)

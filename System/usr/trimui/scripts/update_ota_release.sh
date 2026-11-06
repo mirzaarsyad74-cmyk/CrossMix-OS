@@ -94,17 +94,15 @@ get_release_info() {
 
     echo -e "${GREEN}DONE${NC}"
 
-    echo -ne "\n\n\n\n" \
-        "${BLUE}======= Installed Version ========${NC}\n" \
-        " Version: $Local_CrossMixVersion \n" \
-        "${BLUE}==================================${NC}\n"
-    echo -ne "\n\n" \
-        "${BLUE}======== Online Version  =========${NC}\n" \
-        " Version: $Release_FullVersion \n" \
-        " Size:    ${Release_size_MB}MB \n" \
-        " Date:    $Release_Date \n" \
-        " URL:     $Release_url \n" \
-        "${BLUE}==================================${NC}\n\n\n\n\n"
+    clear
+    echo -e "${BLUE}┌────────────────────────────────────────────────────────────┐${NC}"
+    echo -e "${BLUE}│               ${GREEN}CROSSMIX-OS FIRMWARE AUDIT${BLUE}                  │${NC}"
+    echo -e "${BLUE}└────────────────────────────────────────────────────────────┘${NC}"
+    echo -e "  ${PURPLE}► Installed Version :${NC} ${YELLOW}$Local_CrossMixVersion${NC}"
+    echo -e "  ${PURPLE}► Latest Available  :${NC} ${GREEN}$Release_FullVersion${NC}"
+    echo -e "  ${PURPLE}► Package Size      :${NC} ${Release_size_MB} MB"
+    echo -e "  ${PURPLE}► Release Date      :${NC} $Release_Date"
+    echo -e "${BLUE}────────────────────────────────────────────────────────────${NC}\n"
 
     Local_Version=$(get_version $Local_Version)
     Remote_Version=$(get_version $Release_Version)

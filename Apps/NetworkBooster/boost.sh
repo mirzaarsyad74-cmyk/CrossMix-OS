@@ -78,3 +78,4 @@ fi
 touch /tmp/network_boosted
 log "=== Network Speed Booster Finished Successfully ==="
 exit 0
+

@@ -1,0 +1,34 @@
+# Force LF line endings for all Linux scripts and configs
+* text=auto eol=lf
+*.sh text eol=lf
+*.py text eol=lf
+*.gptk text eol=lf
+*.conf text eol=lf
+*.json text eol=lf
+*.txt text eol=lf
+
+# Binary files
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.bmp binary
+*.ico binary
+*.ttf binary
+*.so binary
+*.so.* binary
+*.7z binary
+*.7z.* binary
+*.zip binary
+*.tar binary
+*.gz binary
+*.db binary
+*.elf binary
+steamlink binary
+python3.11 binary
+yt-dlp.py binary
+VirtualKeyboard binary
+selector binary
+SimpleTerminal binary
+TermSP binary
+presenter binary
+sdl2imgshow binary

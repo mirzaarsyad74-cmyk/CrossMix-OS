@@ -5,20 +5,23 @@ Outputs clean option lines for TrimUI's native selector menu.
 """
 
 import sys
+import os
 import subprocess
 import json
 
 def search_youtube(query, count=8):
-    ytdl_bin = "/mnt/SDCARD/System/bin/yt-dlp"
-    # Fallback to local python or PATH if not found on dev machine
-    cmd = [ytdl_bin, "--flat-playlist", "--dump-json", "--no-warnings", f"ytsearch{count}:{query}"]
+    python_bin = "/mnt/SDCARD/System/bin/python3.11"
+    ytdl_bin = "/mnt/SDCARD/System/bin/yt-dlp.py"
+    
+    if os.path.exists(python_bin) and os.path.exists(ytdl_bin):
+        cmd = [python_bin, ytdl_bin, "--flat-playlist", "--dump-json", "--no-warnings", f"ytsearch{count}:{query}"]
+    elif os.path.exists("System/bin/yt-dlp.py"):
+        cmd = [sys.executable, "System/bin/yt-dlp.py", "--flat-playlist", "--dump-json", "--no-warnings", f"ytsearch{count}:{query}"]
+    else:
+        cmd = ["yt-dlp", "--flat-playlist", "--dump-json", "--no-warnings", f"ytsearch{count}:{query}"]
+        
     try:
-        proc = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, timeout=20)
-    except FileNotFoundError:
-        # Dev fallback
-        cmd[0] = sys.executable
-        cmd.insert(1, "System/bin/yt-dlp")
-        proc = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, timeout=20)
+        proc = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, timeout=25)
     except Exception as e:
         print(f"Error querying YouTube: {e}", file=sys.stderr)
         return []
@@ -32,7 +35,6 @@ def search_youtube(query, count=8):
             item = json.loads(line)
             vid_id = item.get("id", "")
             title = item.get("title", "Untitled")
-            # Truncate title if too long for screen
             if len(title) > 42:
                 title = title[:39] + "..."
             dur = item.get("duration_string", "")
@@ -40,7 +42,6 @@ def search_youtube(query, count=8):
             if len(chan) > 16:
                 chan = chan[:14] + ".."
             
-            # Format: [Duration] Title - Channel [ID:xxxxxx]
             dur_prefix = f"[{dur}] " if dur else ""
             chan_suffix = f" ({chan})" if chan else ""
             entry = f"{dur_prefix}{title}{chan_suffix} [ID:{vid_id}]"
@@ -57,7 +58,6 @@ if __name__ == "__main__":
     query = sys.argv[1]
     count = int(sys.argv[2]) if len(sys.argv) > 2 else 8
     
-    # Handle category presets
     if query == "--gaming":
         query = "gaming trailers gameplay steam deck"
     elif query == "--tech":

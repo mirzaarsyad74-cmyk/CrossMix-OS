@@ -230,12 +230,23 @@ cat <<EOF > "$DEV_JSON"
 }
 EOF
 
-# 8. Device naming & wake lock
+# 8. Device naming & wake lock & SSL certificates
 export SL_DEVICE_NAME="TrimUI Smart Pro"
 echo 1 > /tmp/stay_awake
 
+# Link SSL root certificate bundle for Steam Cloud pairing over Internet
+mkdir -p /etc/ssl 2>/dev/null
+if [ ! -f /etc/ssl/ca-bundle.pem ] && [ -f "$APP_DIR/cacert.pem" ]; then
+    cp -f "$APP_DIR/cacert.pem" /etc/ssl/ca-bundle.pem 2>/dev/null
+fi
+export SSL_CERT_FILE="$APP_DIR/cacert.pem"
+
 chmod +x "$APP_DIR/steamlink" 2>/dev/null
-"$APP_DIR/steamlink" --config "$DEV_JSON" > "$APP_DIR/steamlink.log" 2>&1
+if [ -n "$CUSTOM_HOST" ]; then
+    "$APP_DIR/steamlink" --config "$DEV_JSON" --host "$CUSTOM_HOST" > "$APP_DIR/steamlink.log" 2>&1
+else
+    "$APP_DIR/steamlink" --config "$DEV_JSON" > "$APP_DIR/steamlink.log" 2>&1
+fi
 
 # 9. Restore system state on exit
 rm -f /tmp/stay_awake
