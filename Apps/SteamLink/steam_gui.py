@@ -170,8 +170,8 @@ def main():
         # Bottom Actions
         renderer.draw_bottom_bar(draw, [
             ("A", "Launch Remote Play", True),
+            ("Y", "Pair New PC (Show PIN)", False),
             ("X", "Steam Settings", False),
-            ("Y", "Network Booster", False),
             ("B", "Exit", False)
         ])
         display.blit(canvas)
@@ -187,9 +187,17 @@ def main():
             # Open Steam Settings GUI
             subprocess.run([sys.executable, CONFIGURE_GUI])
         elif btn == "Y":
-            # Open Network Booster
-            if os.path.exists(BOOST_SH):
-                subprocess.run([BOOST_SH])
+            # Clear old pairing file so steamlink enters 4-digit PIN pairing mode
+            if os.path.exists(DEV_JSON):
+                try: os.remove(DEV_JSON)
+                except Exception: pass
+            canvas, draw = renderer.create_canvas()
+            renderer.draw_top_bar(draw, "STEAM LINK", "PAIRING WITH PC")
+            draw.text((640, 360), "Connecting in Pairing Mode...\nLook for the 4-digit PIN on this screen!", font=renderer.fonts.get(22, bold=True), fill=COLOR_CYAN_FOCUS, anchor="mm")
+            display.blit(canvas)
+            gamepad.close()
+            subprocess.run([LAUNCH_SH, "--pair"])
+            break
         elif btn == "A":
             # Launch Steam Link Client
             canvas, draw = renderer.create_canvas()

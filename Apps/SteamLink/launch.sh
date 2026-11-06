@@ -53,6 +53,9 @@ for arg in "$@"; do
             exec "$APP_DIR/configure.sh"
             exit 0
             ;;
+        pair|--pair|re-pair|--reset-pairing)
+            rm -f "$APP_DIR/device.json"
+            ;;
         1080|1080p|--1080)
             RESOLUTION="1080"
             BATTERY_SAVER="0"
@@ -281,7 +284,7 @@ pkill -9 -f pic2fb 2>/dev/null
 pkill -9 -f steam_gui 2>/dev/null
 sleep 0.2
 
-if [ -f "$DEV_JSON" ] && [ -n "$CUSTOM_HOST" ]; then
+if [ -n "$CUSTOM_HOST" ]; then
     "$APP_DIR/steamlink" --host "$CUSTOM_HOST" > "$APP_DIR/steamlink.log" 2>&1
     EXIT_CODE=$?
 else
