@@ -1,3 +1,4 @@
 #!/bin/sh
 export LD_LIBRARY_PATH="/mnt/SDCARD/System/lib:/usr/trimui/lib:$LD_LIBRARY_PATH"
 exec /mnt/SDCARD/System/bin/python3.11 "$@"
+

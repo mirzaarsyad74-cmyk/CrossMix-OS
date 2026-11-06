@@ -6,3 +6,4 @@ if [ -x "/mnt/SDCARD/System/bin/python3.11" ]; then
 else
     exec python3 /mnt/SDCARD/System/bin/yt-dlp.py "$@"
 fi
+

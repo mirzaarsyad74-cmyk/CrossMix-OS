@@ -50,5 +50,6 @@ if [ ! "$currentUpdatePack" = "$onlineUpdatePack" ] || [ "$missing_files" -eq 1 
     download_file "infoscreen.sh" "https://raw.githubusercontent.com/$GITHUB_REPOSITORY/refs/heads/main/System/usr/trimui/scripts/infoscreen.sh" -d "/mnt/SDCARD/System/usr/trimui/scripts"
     sync
     /mnt/SDCARD/System/usr/trimui/scripts/infoscreen.sh -m "Update scripts upgraded, please launch OTA update again." -t 5
-    killall -2 SimpleTerminal
+    pkill -f sdl2imgshow 2>/dev/null
+    killall -2 SimpleTerminal 2>/dev/null
 fi
