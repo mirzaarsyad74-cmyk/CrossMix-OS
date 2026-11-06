@@ -11,6 +11,7 @@ import time
 import json
 import struct
 import select
+import ssl
 import urllib.request
 import urllib.error
 import subprocess
@@ -532,15 +533,46 @@ def get_installed_version():
 
 
 def fetch_release_info(repo="mirzaarsyad74-cmyk/CrossMix-OS"):
-    """Fetches release info from GitHub API."""
+    """Fetches release info from GitHub API with multi-tier SSL verification bypass."""
     url = f"https://api.github.com/repos/{repo}/releases/latest"
-    req = urllib.request.Request(url, headers={"User-Agent": "CrossMix-OTA"})
-    with urllib.request.urlopen(req, timeout=10) as resp:
-        data = json.loads(resp.read().decode("utf-8"))
+    raw_json = None
 
-    tag = data.get("tag_name", "").lstrip("v")
-    body = data.get("body", "")
-    created_at = data.get("created_at", "")[:10]
+    # Tier 1: curl -k (insecure SSL bypass, standard on TrimUI Smart Pro)
+    try:
+        cmd = ["curl", "-k", "-s", "-H", "User-Agent: CrossMix-OTA", url]
+        res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, timeout=12)
+        if res.returncode == 0 and res.stdout.strip().startswith("{"):
+            raw_json = res.stdout
+    except Exception:
+        pass
+
+    # Tier 2: urllib with unverified SSL context
+    if not raw_json:
+        try:
+            ctx = ssl._create_unverified_context()
+            req = urllib.request.Request(url, headers={"User-Agent": "CrossMix-OTA"})
+            with urllib.request.urlopen(req, context=ctx, timeout=12) as resp:
+                raw_json = resp.read().decode("utf-8")
+        except Exception:
+            pass
+
+    # Tier 3: wget --no-check-certificate
+    if not raw_json:
+        try:
+            cmd = ["wget", "--no-check-certificate", "-qO-", "--header=User-Agent: CrossMix-OTA", url]
+            res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, timeout=12)
+            if res.returncode == 0 and res.stdout.strip().startswith("{"):
+                raw_json = res.stdout
+        except Exception:
+            pass
+
+    if not raw_json:
+        raise RuntimeError("Could not connect to GitHub API after curl, urllib, and wget attempts.")
+
+    data = json.loads(raw_json)
+    tag = (data.get("tag_name") or "").lstrip("v")
+    body = data.get("body") or ""
+    created_at = (data.get("created_at") or "")[:10]
 
     asset_url = ""
     asset_size = 0
@@ -549,6 +581,10 @@ def fetch_release_info(repo="mirzaarsyad74-cmyk/CrossMix-OS"):
             asset_url = a.get("browser_download_url")
             asset_size = a.get("size", 0)
             break
+
+    # If no specific zip asset, check zipball
+    if not asset_url:
+        asset_url = data.get("zipball_url", "")
 
     changelog_lines = []
     for line in body.splitlines():
@@ -562,7 +598,7 @@ def fetch_release_info(repo="mirzaarsyad74-cmyk/CrossMix-OS"):
         "size_bytes": asset_size,
         "size_mb": asset_size // (1024 * 1024) if asset_size else 960,
         "date": created_at,
-        "changelog": changelog_lines or ["- Performance optimizations", "- System updates & fixes"],
+        "changelog": changelog_lines or ["- SteamOS Handheld Edition updates", "- System fixes & performance improvements"],
         "free_mb": 22400
     }
 
@@ -641,7 +677,8 @@ def run_interactive_ota():
 
     req = urllib.request.Request(dl_url, headers={"User-Agent": "CrossMix-OTA"})
     try:
-        with urllib.request.urlopen(req, timeout=15) as resp:
+        ctx = ssl._create_unverified_context()
+        with urllib.request.urlopen(req, context=ctx, timeout=20) as resp:
             if total_size == 0:
                 total_size = int(resp.headers.get("Content-Length", 0))
 
@@ -679,12 +716,19 @@ def run_interactive_ota():
             os.rename(temp_file, dest_file)
 
     except Exception as e:
-        if os.path.exists(temp_file): os.remove(temp_file)
-        frame = renderer.draw_error("Download Aborted", str(e), "Check network stability and retry.")
-        display.blit(frame)
-        time.sleep(4)
-        gamepad.close()
-        return
+        # Fallback to curl -k if python stream had network glitch
+        try:
+            cmd = ["curl", "-k", "-L", "-o", dest_file, dl_url]
+            res = subprocess.run(cmd, timeout=300)
+            if res.returncode != 0:
+                raise RuntimeError("curl failed with code " + str(res.returncode))
+        except Exception as curl_err:
+            if os.path.exists(temp_file): os.remove(temp_file)
+            frame = renderer.draw_error("Download Aborted", str(e), "Check network stability and retry.")
+            display.blit(frame)
+            time.sleep(4)
+            gamepad.close()
+            return
 
     # Step 4: Show Installation Screen
     frame = renderer.draw_installing(target_ver, 3, "Decompressing archive")

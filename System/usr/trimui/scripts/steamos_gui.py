@@ -104,60 +104,66 @@ class DisplayEngine:
 
 
 class Gamepad:
-    """Non-blocking event listener for TrimUI Smart Pro controller."""
+    """Robust non-blocking multi-device event listener for TrimUI Smart Pro controller."""
     def __init__(self):
-        self.nodes = ["/dev/input/event3", "/dev/input/event0", "/dev/input/event1"]
-        self.fd = None
-        for n in self.nodes:
-            if os.path.exists(n):
+        self.fds = []
+        for i in range(8):
+            node = f"/dev/input/event{i}"
+            if os.path.exists(node):
                 try:
-                    self.fd = os.open(n, os.O_RDONLY | os.O_NONBLOCK)
-                    break
+                    fd = os.open(node, os.O_RDONLY | os.O_NONBLOCK)
+                    self.fds.append(fd)
                 except Exception:
-                    continue
+                    pass
 
     def poll(self):
-        """Returns single key event 'A', 'B', 'X', 'Y', 'UP', 'DOWN', 'LEFT', 'RIGHT', 'START', 'SELECT'."""
-        if self.fd is None:
+        """Returns single key event 'A', 'B', 'X', 'Y', 'UP', 'DOWN', 'LEFT', 'RIGHT', 'START', 'SELECT', 'MENU'."""
+        if not self.fds:
             return None
         EVENT_SZ = 24
         try:
-            r, _, _ = select.select([self.fd], [], [], 0)
-            if not r:
-                return None
-            data = os.read(self.fd, EVENT_SZ * 16)
-            for i in range(0, len(data), EVENT_SZ):
-                chunk = data[i:i + EVENT_SZ]
-                if len(chunk) < EVENT_SZ:
-                    continue
-                _, _, ev_type, ev_code, ev_val = struct.unpack("qqHHi", chunk)
-                # EV_KEY (1)
-                if ev_type == 1 and ev_val == 1:
-                    if ev_code == 305: return "A"
-                    if ev_code == 304: return "B"
-                    if ev_code == 307: return "Y"
-                    if ev_code == 308: return "X"
-                    if ev_code == 315: return "START"
-                    if ev_code == 314: return "SELECT"
-                    if ev_code == 316: return "MENU"
-                # EV_ABS (3)
-                elif ev_type == 3:
-                    if ev_code == 17:  # D-PAD Y
-                        if ev_val == -1: return "UP"
-                        if ev_val == 1:  return "DOWN"
-                    elif ev_code == 16: # D-PAD X
-                        if ev_val == -1: return "LEFT"
-                        if ev_val == 1:  return "RIGHT"
+            readable, _, _ = select.select(self.fds, [], [], 0)
+            for fd in readable:
+                data = os.read(fd, EVENT_SZ * 16)
+                for i in range(0, len(data), EVENT_SZ):
+                    chunk = data[i:i + EVENT_SZ]
+                    if len(chunk) < EVENT_SZ:
+                        continue
+                    _, _, ev_type, ev_code, ev_val = struct.unpack("qqHHi", chunk)
+                    # EV_KEY (1)
+                    if ev_type == 1 and ev_val == 1:
+                        if ev_code in (305, 1): return "A"
+                        if ev_code in (304, 2): return "B"
+                        if ev_code in (307, 3): return "Y"
+                        if ev_code in (308, 4): return "X"
+                        if ev_code in (315, 297): return "START"
+                        if ev_code in (314, 296): return "SELECT"
+                        if ev_code in (316, 139): return "MENU"
+                        if ev_code in (103, 544): return "UP"
+                        if ev_code in (108, 545): return "DOWN"
+                        if ev_code in (105, 546): return "LEFT"
+                        if ev_code in (106, 547): return "RIGHT"
+                    # EV_ABS (3)
+                    elif ev_type == 3:
+                        # D-Pad HAT (16/17) or Analog Y (1)
+                        if ev_code in (17, 1):
+                            if ev_val < -100 or ev_val == -1: return "UP"
+                            elif ev_val > 100 or ev_val == 1: return "DOWN"
+                        # D-Pad HAT (16) or Analog X (0)
+                        elif ev_code in (16, 0):
+                            if ev_val < -100 or ev_val == -1: return "LEFT"
+                            elif ev_val > 100 or ev_val == 1: return "RIGHT"
         except Exception:
             pass
         return None
 
     def close(self):
-        if self.fd is not None:
+        for fd in self.fds:
             try:
-                os.close(self.fd)
+                os.close(fd)
             except Exception:
                 pass
+        self.fds.clear()
 
 
 class SteamOSRenderer:
@@ -277,3 +283,4 @@ class SteamOSRenderer:
                 draw.text((bx + 9, by + 5), badge, font=font_badge, fill=COLOR_TEXT_PRIMARY)
 
             draw_y += item_h + 8
+

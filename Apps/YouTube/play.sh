@@ -36,6 +36,12 @@ esac
 echo 1 > /tmp/stay_awake
 touch /var/trimui_inputd/sticks_disabled
 
+# Clean up all background framebuffer display holders before launching MPV
+pkill -9 -f sdl2imgshow 2>/dev/null
+pkill -9 -f presenter 2>/dev/null
+pkill -9 -f pic2fb 2>/dev/null
+sleep 0.2
+
 # Start controller mapping daemon
 GPTO_PID=""
 if [ -x "$GPTOKEYB" ] && [ -f "$GPTK_CONF" ]; then

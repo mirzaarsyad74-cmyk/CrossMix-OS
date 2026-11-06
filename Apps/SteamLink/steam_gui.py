@@ -197,7 +197,8 @@ def main():
             draw.text((640, 360), "Connecting to Steam Remote Play...\nPress MENU to disconnect.", font=renderer.fonts.get(24, bold=True), fill=COLOR_CYAN_FOCUS, anchor="mm")
             display.blit(canvas)
 
-            # Invoke launch.sh
+            # Release gamepad input descriptors before launching exclusive SDL2 engine
+            gamepad.close()
             subprocess.run([LAUNCH_SH])
             break
 
@@ -206,3 +207,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

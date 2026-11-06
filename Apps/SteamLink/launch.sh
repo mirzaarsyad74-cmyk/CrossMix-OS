@@ -245,17 +245,27 @@ export SSL_CERT_FILE="$APP_DIR/cacert.pem"
 
 chmod +x "$APP_DIR/steamlink" 2>/dev/null
 
-if [ ! -f "$DEV_JSON" ]; then
-    if [ -f "/mnt/SDCARD/System/usr/trimui/scripts/infoscreen.sh" ]; then
-        /mnt/SDCARD/System/usr/trimui/scripts/infoscreen.sh -m "Starting Steam Link Pairing Mode...\n\nOpen Steam on PC:\nSettings > Remote Play > Pair Steam Link\nand enter the 4-digit PIN on screen." -t 4 &
-        sleep 2
-    fi
-fi
+# Clean up all background framebuffer display holders before launching exclusive SDL2 engine
+pkill -9 -f sdl2imgshow 2>/dev/null
+pkill -9 -f presenter 2>/dev/null
+pkill -9 -f pic2fb 2>/dev/null
+pkill -9 -f steam_gui 2>/dev/null
+sleep 0.2
 
 if [ -f "$DEV_JSON" ] && [ -n "$CUSTOM_HOST" ]; then
     "$APP_DIR/steamlink" --host "$CUSTOM_HOST" > "$APP_DIR/steamlink.log" 2>&1
+    EXIT_CODE=$?
 else
     "$APP_DIR/steamlink" > "$APP_DIR/steamlink.log" 2>&1
+    EXIT_CODE=$?
+fi
+
+# If steamlink exited with an error, display last error line from log
+if [ $EXIT_CODE -ne 0 ] && [ -s "$APP_DIR/steamlink.log" ]; then
+    ERR_LINE=$(grep -E -i "error|fail|refused|busy|timeout" "$APP_DIR/steamlink.log" 2>/dev/null | tail -n 1)
+    if [ -n "$ERR_LINE" ] && [ -f "/mnt/SDCARD/System/usr/trimui/scripts/infoscreen.sh" ]; then
+        /mnt/SDCARD/System/usr/trimui/scripts/infoscreen.sh -m "Steam Link: $ERR_LINE" -t 4
+    fi
 fi
 
 # 9. Restore system state on exit

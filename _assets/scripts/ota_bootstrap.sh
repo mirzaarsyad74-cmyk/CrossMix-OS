@@ -3,13 +3,13 @@ export PATH="/mnt/SDCARD/System/bin:/mnt/SDCARD/System/usr/trimui/scripts:$PATH"
 export LD_LIBRARY_PATH="/mnt/SDCARD/System/lib:/usr/trimui/lib:$LD_LIBRARY_PATH"
 
 CommonUpdateScript="/mnt/SDCARD/System/usr/trimui/scripts/update_common.sh"
-currentUpdatePack=$("$CommonUpdateScript" -v)
+currentUpdatePack=$("$CommonUpdateScript" -v 2>/dev/null)
 
 GITHUB_REPOSITORY=mirzaarsyad74-cmyk/CrossMix-OS
 UpdatePackUrl="https://raw.githubusercontent.com/$GITHUB_REPOSITORY/main/System/usr/trimui/scripts/update_common.sh"
 wget --no-check-certificate --quiet --show-progress -O "/tmp/update_common.sh" "$UpdatePackUrl"
 chmod +x "/tmp/update_common.sh"
-onlineUpdatePack=$("/tmp/update_common.sh" -v)
+onlineUpdatePack=$("/tmp/update_common.sh" -v 2>/dev/null)
 
 if [ ! "$currentUpdatePack" = "$onlineUpdatePack" ]; then
     mv "/tmp/update_common.sh" "$CommonUpdateScript"
@@ -20,6 +20,8 @@ source "$CommonUpdateScript"
 FILES_TO_CHECK="/mnt/SDCARD/System/usr/trimui/scripts/crossmix_update.sh
 /mnt/SDCARD/System/usr/trimui/scripts/update_ota_release.sh
 /mnt/SDCARD/System/usr/trimui/scripts/ota_update.sh
+/mnt/SDCARD/System/usr/trimui/scripts/ota_gui.py
+/mnt/SDCARD/System/usr/trimui/scripts/steamos_gui.py
 /mnt/SDCARD/Apps/OTA-update/launch.sh
 /mnt/SDCARD/Apps/OTA-update/keys.gptk
 /mnt/SDCARD/System/usr/trimui/scripts/shellect.sh
@@ -43,13 +45,16 @@ fi
 if [ ! "$currentUpdatePack" = "$onlineUpdatePack" ] || [ "$missing_files" -eq 1 ]; then
     download_file "crossmix_update.sh" "https://raw.githubusercontent.com/$GITHUB_REPOSITORY/refs/heads/main/System/usr/trimui/scripts/crossmix_update.sh" -d "/mnt/SDCARD/System/usr/trimui/scripts"
     download_file "ota_update.sh" "https://raw.githubusercontent.com/$GITHUB_REPOSITORY/refs/heads/main/System/usr/trimui/scripts/ota_update.sh" -d "/mnt/SDCARD/System/usr/trimui/scripts"
+    download_file "ota_gui.py" "https://raw.githubusercontent.com/$GITHUB_REPOSITORY/refs/heads/main/System/usr/trimui/scripts/ota_gui.py" -f "/mnt/SDCARD/System/usr/trimui/scripts/ota_gui.py"
+    download_file "steamos_gui.py" "https://raw.githubusercontent.com/$GITHUB_REPOSITORY/refs/heads/main/System/usr/trimui/scripts/steamos_gui.py" -f "/mnt/SDCARD/System/usr/trimui/scripts/steamos_gui.py"
     download_file "launch.sh" "https://raw.githubusercontent.com/$GITHUB_REPOSITORY/refs/heads/main/Apps/OTA-update/launch.sh" -f "/mnt/SDCARD/Apps/OTA-update/launch.sh"
     download_file "keys.gptk" "https://raw.githubusercontent.com/$GITHUB_REPOSITORY/refs/heads/main/Apps/OTA-update/keys.gptk" -f "/mnt/SDCARD/Apps/OTA-update/keys.gptk"
     download_file "Terminal launch.sh" "https://raw.githubusercontent.com/$GITHUB_REPOSITORY/refs/heads/main/Apps/Terminal/launch.sh" -f "/mnt/SDCARD/Apps/Terminal/launch.sh"
     download_file "shellect.sh" "https://raw.githubusercontent.com/$GITHUB_REPOSITORY/refs/heads/main/System/usr/trimui/scripts/shellect.sh" -d "/mnt/SDCARD/System/usr/trimui/scripts"
     download_file "infoscreen.sh" "https://raw.githubusercontent.com/$GITHUB_REPOSITORY/refs/heads/main/System/usr/trimui/scripts/infoscreen.sh" -d "/mnt/SDCARD/System/usr/trimui/scripts"
+    chmod +x /mnt/SDCARD/System/usr/trimui/scripts/*.py /mnt/SDCARD/System/usr/trimui/scripts/*.sh /mnt/SDCARD/Apps/OTA-update/launch.sh 2>/dev/null
     sync
-    /mnt/SDCARD/System/usr/trimui/scripts/infoscreen.sh -m "Update scripts upgraded, please launch OTA update again." -t 5
+    /mnt/SDCARD/System/usr/trimui/scripts/infoscreen.sh -m "Update scripts upgraded to SteamOS Edition.\nPlease launch OTA update again." -t 5
     pkill -f sdl2imgshow 2>/dev/null
     killall -2 SimpleTerminal 2>/dev/null
 fi

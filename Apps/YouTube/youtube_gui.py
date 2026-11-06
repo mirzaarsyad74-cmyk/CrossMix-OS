@@ -9,10 +9,17 @@ import sys
 import time
 import subprocess
 import json
+import traceback
 
-# Ensure access to shared SteamOS GUI framework
-sys.path.insert(0, "/mnt/SDCARD/System/usr/trimui/scripts")
-sys.path.insert(0, "System/usr/trimui/scripts")
+# Ensure access to shared libraries and SteamOS GUI framework
+for p in [
+    "/mnt/SDCARD/System/lib/python3.11/site-packages",
+    "/mnt/SDCARD/System/lib/python3.11",
+    "/mnt/SDCARD/System/usr/trimui/scripts",
+    "System/usr/trimui/scripts"
+]:
+    if os.path.exists(p) and p not in sys.path:
+        sys.path.insert(0, p)
 
 from steamos_gui import SteamOSRenderer, DisplayEngine, Gamepad, COLOR_CYAN_FOCUS, COLOR_CARD_SELECTED, COLOR_CARD_BG, COLOR_CARD_BORDER, COLOR_TEXT_PRIMARY, COLOR_TEXT_SECONDARY, COLOR_GREEN_ACCENT
 
@@ -209,10 +216,29 @@ def play_search_flow(renderer, display, gamepad, query):
             draw.text((640, 360), "Launching MPV Hardware Video Player...\nPress MENU to exit during playback.", font=renderer.fonts.get(24, bold=True), fill=COLOR_CYAN_FOCUS, anchor="mm")
             display.blit(canvas)
 
+            # Release gamepad before starting player
+            gamepad.close()
             # Invoke play.sh
             subprocess.run([PLAY_SH, target_vid])
             break
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except Exception as e:
+        log_file = os.path.join(APP_DIR, "youtube.log")
+        with open(log_file, "a", encoding="utf-8") as f:
+            f.write(f"\n[Crash at {time.ctime()}]: {e}\n")
+            traceback.print_exc(file=f)
+        try:
+            r = SteamOSRenderer()
+            d = DisplayEngine()
+            canvas, draw = r.create_canvas()
+            r.draw_top_bar(draw, "YOUTUBE", "ERROR ALERT")
+            draw.text((640, 360), f"YouTube Encountered an Error:\n{e}\nLogged to {log_file}", font=r.fonts.get(20, bold=True), fill=(255, 75, 75), anchor="mm")
+            d.blit(canvas)
+            time.sleep(4)
+        except Exception:
+            pass
+
