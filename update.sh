@@ -10,7 +10,7 @@ REPO_RAW="https://raw.githubusercontent.com/mirzaarsyad74-cmyk/CrossMix-OS/main"
 
 echo "=================================================="
 echo " SteamOS Handheld Edition - Live Hotfix Updater"
-echo " Target Version: v1.3.9"
+echo " Target Version: v1.4.0"
 echo "=================================================="
 
 # Check network connectivity
@@ -69,14 +69,14 @@ dl "Apps/NetworkBooster/boost_gui.py"
 sync
 
 echo "=================================================="
-echo " All SteamOS v1.3.9 updates applied successfully!"
+echo " All SteamOS v1.4.0 updates applied successfully!"
 echo " OTA updater, Steam Link, and YouTube are fixed."
 echo "=================================================="
 
 # Show on-screen confirmation
 if [ -x "/mnt/SDCARD/System/usr/trimui/scripts/infoscreen.sh" ]; then
     pkill -9 -f sdl2imgshow 2>/dev/null
-    /mnt/SDCARD/System/usr/trimui/scripts/infoscreen.sh -m "SteamOS v1.3.9 Hotfix Applied!\n\nOTA Updater, Steam Link & YouTube\nare now 100% operational." -t 5
+    /mnt/SDCARD/System/usr/trimui/scripts/infoscreen.sh -m "SteamOS v1.4.0 Applied!\n\nOTA Updater, Steam Link & YouTube\nare now 100% operational." -t 5
 fi
 
 exit 0

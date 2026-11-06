@@ -222,7 +222,7 @@ class OtaRenderer:
         font_val = self.fm.get(16, bold=True)
 
         draw.text((lx + 30, ly + 25), "TARGET BUILD", font=font_badge, fill=COLOR_CYAN_ACCENT)
-        draw.text((lx + 30, ly + 46), f"v{release_info.get('version', '1.3.8')}", font=font_big, fill=COLOR_TEXT_PRIMARY)
+        draw.text((lx + 30, ly + 46), f"v{release_info.get('version', '1.4.0')}", font=font_big, fill=COLOR_TEXT_PRIMARY)
 
         # Stats rows
         stats = [

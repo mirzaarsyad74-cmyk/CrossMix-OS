@@ -1,5 +1,5 @@
 #!/bin/sh
-UPDATE_VERSION=2.0.1
+UPDATE_VERSION=2.0.2
 export PATH="/mnt/SDCARD/System/bin:/mnt/SDCARD/System/usr/trimui/scripts:$PATH"
 export LD_LIBRARY_PATH="/mnt/SDCARD/System/lib:/usr/trimui/lib:$LD_LIBRARY_PATH"
 
