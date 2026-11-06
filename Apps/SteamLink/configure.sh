@@ -1,31 +1,35 @@
 #!/bin/sh
-# Steam Link Settings Configurator for TrimUI Smart Pro / CrossMix-OS
-# Configures Resolution, Sharpness (Fix Blur), Host PC (Local/Internet), Bitrate, FPS & Battery Saver
+# Steam Link In-Game & Handheld Configurator for TrimUI Smart Pro / CrossMix-OS
+# Allows live configuration of Resolution, FPS, Bitrate, Xbox/Nintendo Mapping,
+# Battery Saver, Razor-Sharp Anti-Blur mode, and Remote Internet / Tailscale connection.
 
 CONF_DIR="$(cd "$(dirname "$0")" && pwd)"
 SETTINGS_FILE="$CONF_DIR/settings.conf"
-STEAM_BIN="$CONF_DIR/steamlink"
 SELECTOR="/mnt/SDCARD/System/bin/selector"
 INFOSCREEN="/mnt/SDCARD/System/usr/trimui/scripts/infoscreen.sh"
 VK="/mnt/SDCARD/System/bin/VirtualKeyboard"
 BG_IMG="/mnt/SDCARD/System/usr/trimui/res/settings_bg.png"
 [ ! -f "$BG_IMG" ] && BG_IMG="/mnt/SDCARD/trimui/res/crossmix-os/bg-plain.png"
 
-# 1. Load current persisted settings
+TMP_MAIN="/tmp/steam_menu.txt"
+TMP_SUB="/tmp/steam_sub.txt"
+
+# Default configuration values
+RESOLUTION="720"
+FPS="60"
+LAYOUT="xbox"
+BATTERY_SAVER="0"
+SHARP_MODE="1"
+BITRATE_KBPS="15000"
+CUSTOM_HOST=""
+
+# Load persisted settings if file exists
 if [ -f "$SETTINGS_FILE" ]; then
     . "$SETTINGS_FILE"
 fi
-RESOLUTION="${RESOLUTION:-720}"
-FPS="${FPS:-60}"
-LAYOUT="${LAYOUT:-xbox}"
-BATTERY_SAVER="${BATTERY_SAVER:-0}"
-SHARP_MODE="${SHARP_MODE:-1}"
-BITRATE_KBPS="${BITRATE_KBPS:-15000}"
-CUSTOM_HOST="${CUSTOM_HOST:-}"
 
 save_settings() {
     cat <<EOF > "$SETTINGS_FILE"
-# Steam Link Configuration for TrimUI Smart Pro / CrossMix-OS
 RESOLUTION="$RESOLUTION"
 FPS="$FPS"
 LAYOUT="$LAYOUT"
@@ -34,22 +38,11 @@ SHARP_MODE="$SHARP_MODE"
 BITRATE_KBPS="$BITRATE_KBPS"
 CUSTOM_HOST="$CUSTOM_HOST"
 EOF
-
-    # Apply byte patch to steamlink binary at offset 0x34f588
-    # 0x30 ('0') = Nearest-neighbor sharp sampling (0 BLUR)
-    # 0x31 ('1') = Bilinear filter (blurry)
-    if [ -f "$STEAM_BIN" ]; then
-        if [ "$SHARP_MODE" = "1" ]; then
-            printf '\x30' | dd of="$STEAM_BIN" bs=1 seek=$((0x34f588)) count=1 conv=notrunc 2>/dev/null
-        else
-            printf '\x31' | dd of="$STEAM_BIN" bs=1 seek=$((0x34f588)) count=1 conv=notrunc 2>/dev/null
-        fi
-    fi
 }
 
 show_info() {
     if [ -x "$INFOSCREEN" ]; then
-        "$INFOSCREEN" -m "$1" -t "${2:-2}"
+        "$INFOSCREEN" -m "$1" -t "${2:-3}"
     else
         echo "$1"
     fi
@@ -73,18 +66,22 @@ while true; do
     BTR_MBPS=$((BITRATE_KBPS / 1000))
 
     TITLE="STEAM LINK SETTINGS // CrossMix-OS"
-    CHOICES="Resolution: $R_LBL"
-    CHOICES="$CHOICES\nImage Sharpness: $S_LBL"
-    CHOICES="$CHOICES\nHost Connection: $H_LBL"
-    CHOICES="$CHOICES\nVideo Bitrate: ${BTR_MBPS} Mbps"
-    CHOICES="$CHOICES\nFramerate: $F_LBL"
-    CHOICES="$CHOICES\nController Mapping: $L_LBL"
-    CHOICES="$CHOICES\nBattery Saver: $B_LBL"
-    CHOICES="$CHOICES\n>>> Launch Steam Link Now <<<"
-    CHOICES="$CHOICES\nExit to Main Menu"
+
+    cat <<EOF > "$TMP_MAIN"
+Resolution: $R_LBL
+Image Sharpness: $S_LBL
+Host Connection: $H_LBL
+Video Bitrate: ${BTR_MBPS} Mbps
+Framerate: $F_LBL
+Controller Mapping: $L_LBL
+Battery Saver: $B_LBL
+Connection Guide (Same & Different Network)
+>>> Launch Steam Link Now <<<
+Exit to Main Menu
+EOF
 
     if [ -x "$SELECTOR" ]; then
-        SEL=$(echo -e "$CHOICES" | "$SELECTOR" -i "$BG_IMG" -t "$TITLE" -fs 130 2>/dev/null)
+        SEL=$("$SELECTOR" -i "$BG_IMG" -t "$TITLE" -fs 125 -cf "$TMP_MAIN" 2>/dev/null)
         ACTION=$(echo "$SEL" | sed 's/^.*: //')
     else
         ACTION="Exit to Main Menu"
@@ -92,8 +89,14 @@ while true; do
 
     case "$ACTION" in
         *"Resolution:"*)
-            SUB_CHOICES="720p Native [Razor Sharp 1280x720 - RECOMMENDED]\n1080p FHD [1920x1080 Downsampled]\n480p Balanced [854x480 Low Power]\n320p Ultra Save [568x320]\nBack"
-            SUB_SEL=$(echo -e "$SUB_CHOICES" | "$SELECTOR" -i "$BG_IMG" -t "Choose Steam Stream Resolution" -fs 130 2>/dev/null)
+            cat <<EOF > "$TMP_SUB"
+720p Native [Razor Sharp 1280x720 - RECOMMENDED]
+1080p FHD [1920x1080 Downsampled]
+480p Balanced [854x480 Low Power]
+320p Ultra Save [568x320]
+Back
+EOF
+            SUB_SEL=$("$SELECTOR" -i "$BG_IMG" -t "Choose Steam Stream Resolution" -fs 125 -cf "$TMP_SUB" 2>/dev/null)
             SUB_ACT=$(echo "$SUB_SEL" | sed 's/^.*: //')
             case "$SUB_ACT" in
                 *"720p"*)  RESOLUTION="720"; SHARP_MODE="1"; save_settings ;;
@@ -103,8 +106,12 @@ while true; do
             esac
             ;;
         *"Image Sharpness:"*)
-            SUB_CHOICES="Razor Sharp [Point Sampling - NO BLUR - RECOMMENDED]\nSmooth [Bilinear Filter - Softer Pixels]\nBack"
-            SUB_SEL=$(echo -e "$SUB_CHOICES" | "$SELECTOR" -i "$BG_IMG" -t "Select Image Sharpness Filter" -fs 130 2>/dev/null)
+            cat <<EOF > "$TMP_SUB"
+Razor Sharp [Point Sampling - NO BLUR - RECOMMENDED]
+Smooth [Bilinear Filter - Softer Pixels]
+Back
+EOF
+            SUB_SEL=$("$SELECTOR" -i "$BG_IMG" -t "Select Image Sharpness Filter" -fs 125 -cf "$TMP_SUB" 2>/dev/null)
             SUB_ACT=$(echo "$SUB_SEL" | sed 's/^.*: //')
             case "$SUB_ACT" in
                 *"Razor Sharp"*) SHARP_MODE="1"; save_settings ;;
@@ -112,8 +119,13 @@ while true; do
             esac
             ;;
         *"Host Connection:"*)
-            SUB_CHOICES="Auto-Discovery [Local Wi-Fi Network]\nEnter PC IP or Domain [Internet / Remote Play / Tailscale]\nClear Host IP\nBack"
-            SUB_SEL=$(echo -e "$SUB_CHOICES" | "$SELECTOR" -i "$BG_IMG" -t "Host PC Connection Mode" -fs 130 2>/dev/null)
+            cat <<EOF > "$TMP_SUB"
+Auto-Discovery [Local Wi-Fi Network]
+Enter PC IP or Domain [Internet / Remote Play / Tailscale]
+Clear Host IP
+Back
+EOF
+            SUB_SEL=$("$SELECTOR" -i "$BG_IMG" -t "Host PC Connection Mode" -fs 125 -cf "$TMP_SUB" 2>/dev/null)
             SUB_ACT=$(echo "$SUB_SEL" | sed 's/^.*: //')
             case "$SUB_ACT" in
                 *"Auto-Discovery"*)
@@ -141,8 +153,15 @@ while true; do
             esac
             ;;
         *"Video Bitrate:"*)
-            SUB_CHOICES="20 Mbps [Maximum Clarity / 5GHz Wi-Fi]\n15 Mbps [High Clarity - Recommended]\n12 Mbps [Standard]\n8 Mbps [Balanced]\n4 Mbps [Eco / Weak Wi-Fi]\nBack"
-            SUB_SEL=$(echo -e "$SUB_CHOICES" | "$SELECTOR" -i "$BG_IMG" -t "Select Stream Bitrate Limit" -fs 130 2>/dev/null)
+            cat <<EOF > "$TMP_SUB"
+20 Mbps [Maximum Clarity / 5GHz Wi-Fi]
+15 Mbps [High Clarity - Recommended]
+12 Mbps [Standard]
+8 Mbps [Balanced]
+4 Mbps [Eco / Weak Wi-Fi]
+Back
+EOF
+            SUB_SEL=$("$SELECTOR" -i "$BG_IMG" -t "Select Stream Bitrate Limit" -fs 125 -cf "$TMP_SUB" 2>/dev/null)
             SUB_ACT=$(echo "$SUB_SEL" | sed 's/^.*: //')
             case "$SUB_ACT" in
                 *"20 Mbps"*) BITRATE_KBPS="20000"; save_settings ;;
@@ -153,8 +172,12 @@ while true; do
             esac
             ;;
         *"Framerate:"*)
-            SUB_CHOICES="60 FPS [Ultra Smooth Gameplay]\n30 FPS [Battery Saver Mode]\nBack"
-            SUB_SEL=$(echo -e "$SUB_CHOICES" | "$SELECTOR" -i "$BG_IMG" -t "Select Stream Framerate Target" -fs 130 2>/dev/null)
+            cat <<EOF > "$TMP_SUB"
+60 FPS [Ultra Smooth Gameplay]
+30 FPS [Battery Saver Mode]
+Back
+EOF
+            SUB_SEL=$("$SELECTOR" -i "$BG_IMG" -t "Select Stream Framerate Target" -fs 125 -cf "$TMP_SUB" 2>/dev/null)
             SUB_ACT=$(echo "$SUB_SEL" | sed 's/^.*: //')
             case "$SUB_ACT" in
                 *"60 FPS"*) FPS="60"; save_settings ;;
@@ -162,8 +185,12 @@ while true; do
             esac
             ;;
         *"Controller Mapping:"*)
-            SUB_CHOICES="Xbox Standard [A=Bottom, B=Right, X=Left, Y=Top - Standard PC]\nNintendo Layout [A=Right, B=Bottom, X=Top, Y=Left - TrimUI physical]\nBack"
-            SUB_SEL=$(echo -e "$SUB_CHOICES" | "$SELECTOR" -i "$BG_IMG" -t "Select Controller Button Mapping" -fs 130 2>/dev/null)
+            cat <<EOF > "$TMP_SUB"
+Xbox Standard [A=Bottom, B=Right, X=Left, Y=Top - Standard PC]
+Nintendo Layout [A=Right, B=Bottom, X=Top, Y=Left - TrimUI physical]
+Back
+EOF
+            SUB_SEL=$("$SELECTOR" -i "$BG_IMG" -t "Select Controller Button Mapping" -fs 125 -cf "$TMP_SUB" 2>/dev/null)
             SUB_ACT=$(echo "$SUB_SEL" | sed 's/^.*: //')
             case "$SUB_ACT" in
                 *"Xbox"*)     LAYOUT="xbox"; save_settings ;;
@@ -174,13 +201,18 @@ while true; do
             [ "$BATTERY_SAVER" = "1" ] && BATTERY_SAVER="0" || BATTERY_SAVER="1"
             save_settings
             ;;
+        *"Connection Guide"*)
+            show_info "HOW TO CONNECT STEAM LINK:\n\n1. SAME NETWORK (HOME WI-FI):\n   - Open Steam on PC\n   - Launch Steam Link on TrimUI\n   - Enter the 4-digit PIN in Steam on PC: Settings > Remote Play > Pair Steam Link.\n\n2. DIFFERENT NETWORK / INTERNET:\n   - Set 'Host Connection' to your PC IP or Tailscale IP\n   - Or enable Tailscale VPN from Apps menu for zero-config global mesh play anywhere!" 8
+            ;;
         *">>> Launch Steam Link Now <<<"*)
             save_settings
+            rm -f "$TMP_MAIN" "$TMP_SUB" 2>/dev/null
             exec "$CONF_DIR/launch.sh"
             exit 0
             ;;
         *"Exit"|*)
             save_settings
+            rm -f "$TMP_MAIN" "$TMP_SUB" 2>/dev/null
             exit 0
             ;;
     esac

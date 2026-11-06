@@ -39,14 +39,17 @@ while true; do
     [ -f "$AUTO_FILE" ] && AUTO_LBL="Active (Enabled)" || AUTO_LBL="Disabled"
 
     TITLE="TURBO NETWORK SPEED BOOSTER // CrossMix-OS"
-    CHOICES=">>> Activate Turbo Network Boost Now <<<\n"
-    CHOICES="${CHOICES}Auto-Boost on Boot: $AUTO_LBL\n"
-    CHOICES="${CHOICES}Run Network Latency & Ping Test\n"
-    CHOICES="${CHOICES}View Booster Diagnostics Log\n"
-    CHOICES="${CHOICES}Exit"
+    TMP_BOOST="/tmp/boost_menu.txt"
+    cat <<EOF > "$TMP_BOOST"
+>>> Activate Turbo Network Boost Now <<<
+Auto-Boost on Boot: $AUTO_LBL
+Run Network Latency & Ping Test
+View Booster Diagnostics Log
+Exit
+EOF
 
     if [ -x "$SELECTOR" ]; then
-        SEL=$(echo -e "$CHOICES" | "$SELECTOR" -i "$BG_IMG" -t "$TITLE" -fs 130 2>/dev/null)
+        SEL=$("$SELECTOR" -i "$BG_IMG" -t "$TITLE" -fs 130 -cf "$TMP_BOOST" 2>/dev/null)
         ACTION=$(echo "$SEL" | sed 's/^.*: //')
     else
         ACTION="Exit"

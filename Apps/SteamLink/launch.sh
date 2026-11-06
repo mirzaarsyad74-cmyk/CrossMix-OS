@@ -199,7 +199,7 @@ export SDL_GAMECONTROLLERCONFIG_FILE="$APP_DIR/gamecontrollerdb.txt"
 export SDL_GAMECONTROLLERCONFIG="190000004b4800000111000000010000,retrogame_joypad,$MAP_COMMON
 19000000010000000100000000010000,Deeplay-keys,$MAP_COMMON"
 
-# 7. Sync stream settings with device.json
+# 7. Sync stream settings with device.json (Only when legitimately paired)
 DEV_JSON="$APP_DIR/device.json"
 PAIRED_ID=""
 PAIRED_SECRET=""
@@ -208,19 +208,20 @@ PAIRED_STEAMID=""
 PAIRED_AT=""
 
 if [ -f "$DEV_JSON" ]; then
-    PAIRED_ID=$(grep -o '"device_id":[ ]*[0-9]*' "$DEV_JSON" | awk -F: '{print $2}' | tr -d ' ')
-    PAIRED_SECRET=$(grep -o '"secret":[ ]*"[^"]*"' "$DEV_JSON" | awk -F'"' '{print $4}')
-    PAIRED_STEAMID=$(grep -o '"steamid":[ ]*[0-9]*' "$DEV_JSON" | awk -F: '{print $2}' | tr -d ' ')
-    PAIRED_AT=$(grep -o '"paired_at":[ ]*"[^"]*"' "$DEV_JSON" | awk -F'"' '{print $4}')
-fi
+    PAIRED_SECRET=$(grep -o '"secret":[ ]*"[^"]*"' "$DEV_JSON" 2>/dev/null | awk -F'"' '{print $4}')
+    PAIRED_ID=$(grep -o '"device_id":[ ]*[0-9]*' "$DEV_JSON" 2>/dev/null | awk -F: '{print $2}' | tr -d ' ')
+    PAIRED_STEAMID=$(grep -o '"steamid":[ ]*[0-9]*' "$DEV_JSON" 2>/dev/null | awk -F: '{print $2}' | tr -d ' ')
+    PAIRED_NAME=$(grep -o '"device_name":[ ]*"[^"]*"' "$DEV_JSON" 2>/dev/null | awk -F'"' '{print $4}')
+    PAIRED_AT=$(grep -o '"paired_at":[ ]*"[^"]*"' "$DEV_JSON" 2>/dev/null | awk -F'"' '{print $4}')
 
-# Build config JSON
-cat <<EOF > "$DEV_JSON"
+    if [ -n "$PAIRED_SECRET" ] && [ -n "$PAIRED_STEAMID" ] && [ "$PAIRED_STEAMID" != "0" ]; then
+        # Device is legitimately paired! Update streaming resolution/FPS/bitrate/host:
+        cat <<EOF > "$DEV_JSON"
 {
   "device_id": ${PAIRED_ID:-0},
-  "secret": "${PAIRED_SECRET:-}",
-  "device_name": "${PAIRED_NAME}",
-  "steamid": ${PAIRED_STEAMID:-0},
+  "secret": "${PAIRED_SECRET}",
+  "device_name": "${PAIRED_NAME:-TrimUI Smart Pro}",
+  "steamid": ${PAIRED_STEAMID},
   "paired_at": "${PAIRED_AT:-}",
   "host": "${CUSTOM_HOST:-}",
   "width": $TARGET_W,
@@ -229,23 +230,37 @@ cat <<EOF > "$DEV_JSON"
   "bitrate_kbps": $TARGET_BITRATE
 }
 EOF
+    else
+        # Incomplete / dummy pairing file - remove it so steamlink triggers 4-digit PIN pairing!
+        rm -f "$DEV_JSON"
+    fi
+fi
 
 # 8. Device naming & wake lock & SSL certificates
 export SL_DEVICE_NAME="TrimUI Smart Pro"
 echo 1 > /tmp/stay_awake
 
 # Link SSL root certificate bundle for Steam Cloud pairing over Internet
-mkdir -p /etc/ssl 2>/dev/null
-if [ ! -f /etc/ssl/ca-bundle.pem ] && [ -f "$APP_DIR/cacert.pem" ]; then
+mkdir -p /etc/ssl/certs 2>/dev/null
+if [ -f "$APP_DIR/cacert.pem" ]; then
     cp -f "$APP_DIR/cacert.pem" /etc/ssl/ca-bundle.pem 2>/dev/null
+    cp -f "$APP_DIR/cacert.pem" /etc/ssl/certs/ca-certificates.crt 2>/dev/null
 fi
 export SSL_CERT_FILE="$APP_DIR/cacert.pem"
 
 chmod +x "$APP_DIR/steamlink" 2>/dev/null
-if [ -n "$CUSTOM_HOST" ]; then
-    "$APP_DIR/steamlink" --config "$DEV_JSON" --host "$CUSTOM_HOST" > "$APP_DIR/steamlink.log" 2>&1
+
+if [ ! -f "$DEV_JSON" ]; then
+    if [ -f "/mnt/SDCARD/System/usr/trimui/scripts/infoscreen.sh" ]; then
+        /mnt/SDCARD/System/usr/trimui/scripts/infoscreen.sh -m "Starting Steam Link Pairing Mode...\n\nOpen Steam on PC:\nSettings > Remote Play > Pair Steam Link\nand enter the 4-digit PIN on screen." -t 4 &
+        sleep 2
+    fi
+fi
+
+if [ -f "$DEV_JSON" ] && [ -n "$CUSTOM_HOST" ]; then
+    "$APP_DIR/steamlink" --host "$CUSTOM_HOST" > "$APP_DIR/steamlink.log" 2>&1
 else
-    "$APP_DIR/steamlink" --config "$DEV_JSON" > "$APP_DIR/steamlink.log" 2>&1
+    "$APP_DIR/steamlink" > "$APP_DIR/steamlink.log" 2>&1
 fi
 
 # 9. Restore system state on exit

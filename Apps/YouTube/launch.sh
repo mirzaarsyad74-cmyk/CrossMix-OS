@@ -13,6 +13,10 @@ PYTHON_BIN="/mnt/SDCARD/System/bin/python3.11"
 BG_IMG="/mnt/SDCARD/System/usr/trimui/res/library_bg.png"
 [ ! -f "$BG_IMG" ] && BG_IMG="/mnt/SDCARD/trimui/res/crossmix-os/bg-plain.png"
 
+TMP_MENU="/tmp/yt_menu.txt"
+TMP_LIST="/tmp/yt_list.txt"
+TMP_SUB="/tmp/yt_sub.txt"
+
 export LD_LIBRARY_PATH="/mnt/SDCARD/System/lib:/usr/trimui/lib:$LD_LIBRARY_PATH"
 export PATH="/mnt/SDCARD/System/bin:$PATH"
 
@@ -61,18 +65,21 @@ while true; do
     [ "$SPONSOR_BLOCK" = "1" ] && SB_LBL="Active (Auto-Skip)" || SB_LBL="Disabled"
 
     TITLE="YOUTUBE // AD-FREE HANDHELD // CrossMix-OS"
-    MENU="Search YouTube (Keyboard)\n"
-    MENU="${MENU}Trending: Gaming & Steam Deck\n"
-    MENU="${MENU}Trending: Tech & Handheld Reviews\n"
-    MENU="${MENU}Retro Gaming Longplays\n"
-    MENU="${MENU}Enter Video URL or Video ID\n"
-    MENU="${MENU}Playback Quality: $Q_LBL\n"
-    MENU="${MENU}SponsorBlock: $SB_LBL\n"
-    MENU="${MENU}Ad-Block Status: 100% Active (Zero Ads)\n"
-    MENU="${MENU}Exit to Main Menu"
+    
+    cat <<EOF > "$TMP_MENU"
+Search YouTube (Keyboard)
+Trending: Gaming & Steam Deck
+Trending: Tech & Handheld Reviews
+Retro Gaming Longplays
+Enter Video URL or Video ID
+Playback Quality: $Q_LBL
+SponsorBlock: $SB_LBL
+Ad-Block Status: 100% Active (Zero Ads)
+Exit to Main Menu
+EOF
 
     if [ -x "$SELECTOR" ]; then
-        SEL=$(echo -e "$MENU" | "$SELECTOR" -i "$BG_IMG" -t "$TITLE" -fs 125 2>/dev/null)
+        SEL=$("$SELECTOR" -i "$BG_IMG" -t "$TITLE" -fs 125 -cf "$TMP_MENU" 2>/dev/null)
         ACTION=$(echo "$SEL" | sed 's/^.*: //')
     else
         ACTION="Exit to Main Menu"
@@ -87,10 +94,10 @@ while true; do
             fi
             if [ -n "$SEARCH_QUERY" ]; then
                 show_msg "Searching YouTube for:\n'$SEARCH_QUERY'\nPlease wait 3 seconds..." 2
-                RESULTS=$("$PYTHON_BIN" "$SEARCH_PY" "$SEARCH_QUERY" 10 2>/dev/null)
-                if [ -n "$RESULTS" ]; then
-                    RESULTS="${RESULTS}\nBack to Menu"
-                    PICK=$(echo -e "$RESULTS" | "$SELECTOR" -i "$BG_IMG" -t "Search: $SEARCH_QUERY" -fs 110 2>/dev/null)
+                "$PYTHON_BIN" "$SEARCH_PY" "$SEARCH_QUERY" 10 > "$TMP_LIST" 2>/dev/null
+                if [ -s "$TMP_LIST" ]; then
+                    echo "Back to Menu" >> "$TMP_LIST"
+                    PICK=$("$SELECTOR" -i "$BG_IMG" -t "Search: $SEARCH_QUERY" -fs 110 -cf "$TMP_LIST" 2>/dev/null)
                     CHOICE=$(echo "$PICK" | sed 's/^.*: //')
                     if echo "$CHOICE" | grep -q "\[ID:"; then
                         VID_ID=$(echo "$CHOICE" | grep -o '\[ID:[^]]*\]' | sed 's/\[ID://' | sed 's/\]//')
@@ -103,10 +110,10 @@ while true; do
             ;;
         *"Trending: Gaming"*)
             show_msg "Loading Gaming & Steam Deck Videos...\nPlease wait 3 seconds..." 2
-            RESULTS=$("$PYTHON_BIN" "$SEARCH_PY" --gaming 10 2>/dev/null)
-            if [ -n "$RESULTS" ]; then
-                RESULTS="${RESULTS}\nBack to Menu"
-                PICK=$(echo -e "$RESULTS" | "$SELECTOR" -i "$BG_IMG" -t "Gaming & Steam Deck Videos" -fs 110 2>/dev/null)
+            "$PYTHON_BIN" "$SEARCH_PY" --gaming 10 > "$TMP_LIST" 2>/dev/null
+            if [ -s "$TMP_LIST" ]; then
+                echo "Back to Menu" >> "$TMP_LIST"
+                PICK=$("$SELECTOR" -i "$BG_IMG" -t "Gaming & Steam Deck Videos" -fs 110 -cf "$TMP_LIST" 2>/dev/null)
                 CHOICE=$(echo "$PICK" | sed 's/^.*: //')
                 if echo "$CHOICE" | grep -q "\[ID:"; then
                     VID_ID=$(echo "$CHOICE" | grep -o '\[ID:[^]]*\]' | sed 's/\[ID://' | sed 's/\]//')
@@ -118,10 +125,10 @@ while true; do
             ;;
         *"Trending: Tech"*)
             show_msg "Loading Tech & Handheld Reviews...\nPlease wait 3 seconds..." 2
-            RESULTS=$("$PYTHON_BIN" "$SEARCH_PY" --tech 10 2>/dev/null)
-            if [ -n "$RESULTS" ]; then
-                RESULTS="${RESULTS}\nBack to Menu"
-                PICK=$(echo -e "$RESULTS" | "$SELECTOR" -i "$BG_IMG" -t "Tech & Handheld Reviews" -fs 110 2>/dev/null)
+            "$PYTHON_BIN" "$SEARCH_PY" --tech 10 > "$TMP_LIST" 2>/dev/null
+            if [ -s "$TMP_LIST" ]; then
+                echo "Back to Menu" >> "$TMP_LIST"
+                PICK=$("$SELECTOR" -i "$BG_IMG" -t "Tech & Handheld Reviews" -fs 110 -cf "$TMP_LIST" 2>/dev/null)
                 CHOICE=$(echo "$PICK" | sed 's/^.*: //')
                 if echo "$CHOICE" | grep -q "\[ID:"; then
                     VID_ID=$(echo "$CHOICE" | grep -o '\[ID:[^]]*\]' | sed 's/\[ID://' | sed 's/\]//')
@@ -133,10 +140,10 @@ while true; do
             ;;
         *"Retro Gaming"*)
             show_msg "Loading Retro Gaming Longplays...\nPlease wait 3 seconds..." 2
-            RESULTS=$("$PYTHON_BIN" "$SEARCH_PY" --retro 10 2>/dev/null)
-            if [ -n "$RESULTS" ]; then
-                RESULTS="${RESULTS}\nBack to Menu"
-                PICK=$(echo -e "$RESULTS" | "$SELECTOR" -i "$BG_IMG" -t "Retro Gaming Longplays" -fs 110 2>/dev/null)
+            "$PYTHON_BIN" "$SEARCH_PY" --retro 10 > "$TMP_LIST" 2>/dev/null
+            if [ -s "$TMP_LIST" ]; then
+                echo "Back to Menu" >> "$TMP_LIST"
+                PICK=$("$SELECTOR" -i "$BG_IMG" -t "Retro Gaming Longplays" -fs 110 -cf "$TMP_LIST" 2>/dev/null)
                 CHOICE=$(echo "$PICK" | sed 's/^.*: //')
                 if echo "$CHOICE" | grep -q "\[ID:"; then
                     VID_ID=$(echo "$CHOICE" | grep -o '\[ID:[^]]*\]' | sed 's/\[ID://' | sed 's/\]//')
@@ -157,8 +164,15 @@ while true; do
             fi
             ;;
         *"Playback Quality:"*)
-            Q_MENU="720p Native [Razor Sharp 1280x720 - RECOMMENDED]\n1080p FHD [1920x1080 High Def]\n480p Balanced [Low Bandwidth]\n360p Data Saver\nAudio Only [Music / Podcasts]\nBack"
-            Q_PICK=$(echo -e "$Q_MENU" | "$SELECTOR" -i "$BG_IMG" -t "Select YouTube Playback Resolution" -fs 130 2>/dev/null)
+            cat <<EOF > "$TMP_SUB"
+720p Native [Razor Sharp 1280x720 - RECOMMENDED]
+1080p FHD [1920x1080 High Def]
+480p Balanced [Low Bandwidth]
+360p Data Saver
+Audio Only [Music / Podcasts]
+Back
+EOF
+            Q_PICK=$("$SELECTOR" -i "$BG_IMG" -t "Select YouTube Playback Resolution" -fs 130 -cf "$TMP_SUB" 2>/dev/null)
             Q_CHOICE=$(echo "$Q_PICK" | sed 's/^.*: //')
             case "$Q_CHOICE" in
                 *"720p"*)  MAX_RES="720"; save_settings ;;
@@ -176,6 +190,7 @@ while true; do
             show_msg "YOUTUBE AD-BLOCK ENGINE:\n\nStatus: 100% ACTIVE\n\nDirect stream extraction completely bypasses and strips all YouTube advertisements (pre-roll, mid-roll, and overlay ads).\nEnjoy uninterrupted video playback!" 6
             ;;
         *"Exit"|*)
+            rm -f "$TMP_MENU" "$TMP_LIST" "$TMP_SUB" 2>/dev/null
             exit 0
             ;;
     esac
