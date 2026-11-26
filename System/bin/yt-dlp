@@ -2,9 +2,14 @@
 export LD_LIBRARY_PATH="/mnt/SDCARD/System/lib:/usr/trimui/lib:$LD_LIBRARY_PATH"
 export PATH="/mnt/SDCARD/System/bin:$PATH"
 export PYTHONPATH="/mnt/SDCARD/System/lib/python3.11:/mnt/SDCARD/System/lib/python3.11/site-packages:$PYTHONPATH"
+
+CACERT="/mnt/SDCARD/Apps/SteamLink/cacert.pem"
+if [ -f "$CACERT" ]; then
+    export SSL_CERT_FILE="$CACERT"
+fi
+
 if [ -x "/mnt/SDCARD/System/bin/python3.11" ]; then
     exec /mnt/SDCARD/System/bin/python3.11 /mnt/SDCARD/System/bin/yt-dlp.py "$@"
 else
     exec python3 /mnt/SDCARD/System/bin/yt-dlp.py "$@"
 fi
-

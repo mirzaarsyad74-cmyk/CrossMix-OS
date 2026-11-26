@@ -5,7 +5,7 @@
 
 back = q
 start = enter
-guide = o
+guide = q
 
 # Action Buttons
 a = space
@@ -36,4 +36,3 @@ right_analog_up = 0
 right_analog_down = 9
 right_analog_left = left
 right_analog_right = right
-

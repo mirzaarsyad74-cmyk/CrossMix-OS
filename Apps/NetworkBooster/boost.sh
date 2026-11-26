@@ -30,21 +30,17 @@ ifconfig wlan0 txqueuelen 5000 2>/dev/null && log "[OK] Set wlan0 txqueuelen = 5
 
 # 3. Kernel Sysctl Network Socket Buffer Optimization
 if command -v sysctl >/dev/null 2>&1; then
-    # Socket receive and send buffer maximums (16MB)
     sysctl -w net.core.rmem_max=16777216 >/dev/null 2>&1
     sysctl -w net.core.wmem_max=16777216 >/dev/null 2>&1
     sysctl -w net.core.rmem_default=1048576 >/dev/null 2>&1
     sysctl -w net.core.wmem_default=1048576 >/dev/null 2>&1
 
-    # Network device input queue backlogs
     sysctl -w net.core.netdev_max_backlog=10000 >/dev/null 2>&1
     sysctl -w net.core.somaxconn=4096 >/dev/null 2>&1
 
-    # TCP autotuning buffer windows
     sysctl -w net.ipv4.tcp_rmem="4096 87380 16777216" >/dev/null 2>&1
     sysctl -w net.ipv4.tcp_wmem="4096 65536 16777216" >/dev/null 2>&1
 
-    # Advanced TCP optimizations
     sysctl -w net.ipv4.tcp_window_scaling=1 >/dev/null 2>&1
     sysctl -w net.ipv4.tcp_timestamps=1 >/dev/null 2>&1
     sysctl -w net.ipv4.tcp_sack=1 >/dev/null 2>&1
@@ -54,28 +50,20 @@ if command -v sysctl >/dev/null 2>&1; then
     sysctl -w net.ipv4.tcp_slow_start_after_idle=0 >/dev/null 2>&1
     sysctl -w net.ipv4.tcp_mtu_probing=1 >/dev/null 2>&1
 
-    # Congestion control (Prefer cubic or bbr)
     sysctl -w net.ipv4.tcp_congestion_control=cubic >/dev/null 2>&1 || sysctl -w net.ipv4.tcp_congestion_control=bbr >/dev/null 2>&1
 
     log "[OK] Applied 16MB TCP/UDP socket buffers & low-latency sysctl tuning"
 fi
 
-# 4. Ultra-Fast DNS Resolver Acceleration (Cloudflare 1.1.1.1 + Google 8.8.8.8)
+# 4. Append fast fallback DNS (preserve local router nameserver first for LAN discovery)
 if [ -w /etc/resolv.conf ] || [ -f /etc/resolv.conf ]; then
     grep -q "1.1.1.1" /etc/resolv.conf 2>/dev/null || {
-        cat <<EOF > /tmp/resolv_boosted.conf
-nameserver 1.1.1.1
-nameserver 8.8.8.8
-nameserver 1.0.0.1
-EOF
-        cat /etc/resolv.conf 2>/dev/null >> /tmp/resolv_boosted.conf
-        sort -u /tmp/resolv_boosted.conf > /etc/resolv.conf 2>/dev/null
-        rm -f /tmp/resolv_boosted.conf
-        log "[OK] Cloudflare & Google Ultra-Fast DNS configured"
+        echo "nameserver 1.1.1.1" >> /etc/resolv.conf 2>/dev/null
+        echo "nameserver 8.8.8.8" >> /etc/resolv.conf 2>/dev/null
+        log "[OK] Added Cloudflare & Google fallback DNS"
     }
 fi
 
 touch /tmp/network_boosted
 log "=== Network Speed Booster Finished Successfully ==="
 exit 0
-

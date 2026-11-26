@@ -16,6 +16,14 @@ import urllib.request
 import urllib.error
 import subprocess
 import threading
+
+for _p in (
+    "/mnt/SDCARD/System/lib/python3.11/site-packages",
+    "/mnt/SDCARD/System/lib/python3.11",
+):
+    if os.path.exists(_p) and _p not in sys.path:
+        sys.path.insert(0, _p)
+
 from PIL import Image, ImageDraw, ImageFont
 
 # Screen configuration
@@ -116,18 +124,22 @@ class OtaRenderer:
     """High-fidelity dynamic graphical frame generator for TrimUI Smart Pro."""
     def __init__(self):
         self.fm = FontManager()
+        self._bg_cache = None
 
     def create_canvas(self):
         """Creates 1280x720 obsidian background with subtle tech gradient."""
-        canvas = Image.new("RGB", (SCREEN_W, SCREEN_H), COLOR_BG_DARK)
+        if self._bg_cache is None:
+            bg = Image.new("RGB", (SCREEN_W, SCREEN_H), COLOR_BG_DARK)
+            bg_draw = ImageDraw.Draw(bg)
+            for y in range(SCREEN_H):
+                ratio = y / float(SCREEN_H)
+                r = int(COLOR_BG_DARK[0] * (1 - ratio) + COLOR_BG_GRADIENT[0] * ratio)
+                g = int(COLOR_BG_DARK[1] * (1 - ratio) + COLOR_BG_GRADIENT[1] * ratio)
+                b = int(COLOR_BG_DARK[2] * (1 - ratio) + COLOR_BG_GRADIENT[2] * ratio)
+                bg_draw.line([(0, y), (SCREEN_W, y)], fill=(r, g, b))
+            self._bg_cache = bg
+        canvas = self._bg_cache.copy()
         draw = ImageDraw.Draw(canvas)
-        # Gradient background
-        for y in range(SCREEN_H):
-            ratio = y / float(SCREEN_H)
-            r = int(COLOR_BG_DARK[0] * (1 - ratio) + COLOR_BG_GRADIENT[0] * ratio)
-            g = int(COLOR_BG_DARK[1] * (1 - ratio) + COLOR_BG_GRADIENT[1] * ratio)
-            b = int(COLOR_BG_DARK[2] * (1 - ratio) + COLOR_BG_GRADIENT[2] * ratio)
-            draw.line([(0, y), (SCREEN_W, y)], fill=(r, g, b))
         return canvas, draw
 
     def draw_header(self, draw, title_sub="FIRMWARE INTEGRITY & DISTRIBUTION"):
@@ -420,7 +432,8 @@ class OtaRenderer:
         draw.text((cx + cw // 2, cy + 325), "No new updates are available on the Stable release channel.", font=self.fm.get(15, bold=False), fill=COLOR_TEXT_MUTED, anchor="mm")
 
         self.draw_footer_pill(draw, 50, 660, "A", "Return to Main Menu", primary=True)
-        self.draw_footer_pill(draw, 290, 660, "B", "Exit")
+        self.draw_footer_pill(draw, 310, 660, "Y", "Re-apply Fast Patch (~15 MB)")
+        self.draw_footer_pill(draw, 640, 660, "B", "Exit")
         return canvas
 
     def draw_error(self, title, message, advice=""):
@@ -449,6 +462,11 @@ class DisplayManager:
     """Blits generated PIL frames to the TrimUI Smart Pro LCD display."""
     def __init__(self):
         self.pic2fb_bin = "/mnt/SDCARD/System/bin/pic2fb"
+        if os.path.exists(self.pic2fb_bin):
+            try:
+                os.chmod(self.pic2fb_bin, 0o755)
+            except Exception:
+                pass
         self.has_pic2fb = os.path.exists(self.pic2fb_bin) and os.access(self.pic2fb_bin, os.X_OK)
         self.temp_frame = "/tmp/ota_frame.png"
         self.fb_path = "/dev/fb0"
@@ -479,21 +497,41 @@ class DisplayManager:
 
 
 class GamepadController:
-    """Non-blocking event listener for TrimUI Smart Pro controller."""
+    """Non-blocking event listener for TrimUI Smart Pro controller (/dev/input/event3)."""
     def __init__(self):
-        self.device_nodes = ["/dev/input/event3", "/dev/input/event0", "/dev/input/event1", "/dev/input/event2"]
+        self.device_nodes = ["/dev/input/event3", "/dev/input/event2", "/dev/input/event1", "/dev/input/event0"]
         self.fd = None
+        self.last_poll_time = 0
+        self.debounce_sec = 0.12
         for node in self.device_nodes:
             if os.path.exists(node):
                 try:
                     self.fd = os.open(node, os.O_RDONLY | os.O_NONBLOCK)
+                    self._flush()
                     break
                 except Exception:
+                    self.fd = None
                     continue
 
-    def poll(self):
-        """Returns pressed button 'A', 'B', 'X', 'Y', 'UP', 'DOWN', or None."""
+    def _flush(self):
         if self.fd is None:
+            return
+        try:
+            while True:
+                r, _, _ = select.select([self.fd], [], [], 0)
+                if not r:
+                    break
+                os.read(self.fd, 24 * 32)
+        except Exception:
+            pass
+
+    def poll(self):
+        """Returns pressed button 'A', 'B', 'X', 'Y', 'UP', 'DOWN', 'SELECT', 'START', 'MENU', or None."""
+        if self.fd is None:
+            return None
+
+        now = time.time()
+        if now - self.last_poll_time < self.debounce_sec:
             return None
 
         # Linux input_event is 24 bytes on 64-bit ARM
@@ -511,12 +549,18 @@ class GamepadController:
                     continue
                 _, _, ev_type, ev_code, ev_val = struct.unpack("qqHHi", chunk)
                 if ev_type == 1 and ev_val == 1:  # EV_KEY, KEY_DOWN
+                    self.last_poll_time = now
                     if ev_code == 305: return "A"
                     if ev_code == 304: return "B"
                     if ev_code == 307: return "Y"
                     if ev_code == 308: return "X"
+                    if ev_code == 314: return "SELECT"
                     if ev_code == 315: return "START"
                     if ev_code == 316: return "MENU"
+                elif ev_type == 3:
+                    if ev_code == 17:
+                        if ev_val == -1: self.last_poll_time = now; return "UP"
+                        if ev_val == 1:  self.last_poll_time = now; return "DOWN"
         except Exception:
             pass
         return None
@@ -527,11 +571,31 @@ class GamepadController:
                 os.close(self.fd)
             except Exception:
                 pass
+            self.fd = None
 
 
 # -------------------------------------------------------------
 # Main Update Runner
 # -------------------------------------------------------------
+def get_free_mb(path="/mnt/SDCARD"):
+    """Returns real free MB on target filesystem."""
+    try:
+        import shutil
+        target = path if os.path.exists(path) else "."
+        return shutil.disk_usage(target).free // (1024 * 1024)
+    except Exception:
+        return 22400
+
+
+def parse_version(ver_str):
+    """Parses semver strings like '1.4.10' cleanly for numeric comparison."""
+    nums = []
+    for part in str(ver_str).split("-")[0].split("."):
+        digits = "".join(c for c in part if c.isdigit())
+        nums.append(int(digits) if digits else 0)
+    return tuple(nums)
+
+
 def get_installed_version():
     candidates = [
         "/mnt/SDCARD/System/usr/trimui/crossmix-version.txt",
@@ -592,15 +656,17 @@ def fetch_release_info(repo="mirzaarsyad74-cmyk/CrossMix-OS"):
 
     asset_url = ""
     asset_size = 0
+    is_zipball = False
     for a in data.get("assets", []):
         if a.get("name", "").endswith(".zip") and "CrossMix-OS" in a.get("name", ""):
             asset_url = a.get("browser_download_url")
             asset_size = a.get("size", 0)
             break
 
-    # If no specific zip asset, check zipball
+    # Fallback marker if CI release asset is still uploading
     if not asset_url:
         asset_url = data.get("zipball_url", "")
+        is_zipball = True
 
     changelog_lines = []
     for line in body.splitlines():
@@ -611,12 +677,33 @@ def fetch_release_info(repo="mirzaarsyad74-cmyk/CrossMix-OS"):
     return {
         "version": tag,
         "url": asset_url,
+        "is_zipball": is_zipball,
         "size_bytes": asset_size,
         "size_mb": asset_size // (1024 * 1024) if asset_size else 960,
         "date": created_at,
         "changelog": changelog_lines or ["- SteamOS Handheld Edition updates", "- System fixes & performance improvements"],
-        "free_mb": 22400
+        "free_mb": get_free_mb()
     }
+
+
+def _apply_quick_patch(renderer, display, target_ver):
+    """Executes delta hotfix sync silently with error detection."""
+    frame = renderer.draw_installing(target_ver, 3, "Synchronizing Updated Components")
+    display.blit(frame)
+
+    patch_cmd = (
+        "curl -k -fsSL --max-time 30 "
+        "https://raw.githubusercontent.com/mirzaarsyad74-cmyk/CrossMix-OS/main/update.sh "
+        "| sh -s -- --no-ui"
+    )
+    res = subprocess.run(["sh", "-c", patch_cmd], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, timeout=180)
+    if res.returncode != 0:
+        err_detail = (res.stderr or res.stdout or f"Exit code {res.returncode}").strip().splitlines()[-1][:65]
+        raise RuntimeError(err_detail)
+
+    frame = renderer.draw_installing(target_ver, 5, "Update Finalized")
+    display.blit(frame)
+    time.sleep(2)
 
 
 def run_interactive_ota():
@@ -632,24 +719,37 @@ def run_interactive_ota():
 
     try:
         rel_info = fetch_release_info()
-    except Exception as e:
+    except Exception:
         frame = renderer.draw_error("Connection Error", "Could not reach GitHub Releases API.", "Please verify your Wi-Fi is connected in Main Settings.")
         display.blit(frame)
         time.sleep(4)
         gamepad.close()
         return
 
-    # Check if newer
+    # Semantic version check (prevent accidental downgrades if CI release build is still running)
     target_ver = rel_info.get("version", curr_ver)
-    if target_ver == curr_ver:
+    if parse_version(target_ver) <= parse_version(curr_ver):
         frame = renderer.draw_uptodate(curr_ver)
         display.blit(frame)
         start_wait = time.time()
-        while time.time() - start_wait < 8:
+        reapply_patch = False
+        while time.time() - start_wait < 10:
             btn = gamepad.poll()
             if btn in ("A", "B", "START"):
                 break
+            elif btn == "Y":
+                reapply_patch = True
+                break
             time.sleep(0.05)
+        if not reapply_patch:
+            gamepad.close()
+            return
+        try:
+            _apply_quick_patch(renderer, display, curr_ver)
+        except Exception as e:
+            frame = renderer.draw_error("Patch Error", "Could not re-apply fast update.", str(e))
+            display.blit(frame)
+            time.sleep(4)
         gamepad.close()
         return
 
@@ -677,16 +777,8 @@ def run_interactive_ota():
 
     # Branch A: Quick High-Speed Delta Patch (Scripts, Apps, Binaries ~15 MB, 10s)
     if user_choice == "quick":
-        frame = renderer.draw_installing(target_ver, 1, "Synchronizing Updated Components")
-        display.blit(frame)
-
-        # Run update.sh directly in high-speed silent mode
-        patch_cmd = "curl -k -sL https://raw.githubusercontent.com/mirzaarsyad74-cmyk/CrossMix-OS/main/update.sh | sh"
         try:
-            res = subprocess.run(["sh", "-c", patch_cmd], stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=120)
-            frame = renderer.draw_installing(target_ver, 5, "Update Finalized")
-            display.blit(frame)
-            time.sleep(2)
+            _apply_quick_patch(renderer, display, target_ver)
         except Exception as e:
             frame = renderer.draw_error("Patch Error", "Could not apply quick patch.", str(e))
             display.blit(frame)
@@ -697,8 +789,25 @@ def run_interactive_ota():
 
     # Branch B: Full OS Archive Download & Install (with C-Native Accelerated Curl & Resume)
     dl_url = rel_info.get("url")
-    if not dl_url:
-        frame = renderer.draw_error("Download Error", "No CrossMix-OS zip found in release assets.")
+    if not dl_url or rel_info.get("is_zipball"):
+        frame = renderer.draw_error(
+            "Release Still Building",
+            f"Full OS zip for v{target_ver} is not uploaded yet.",
+            "Press [A] on the previous screen for Quick Patch, or retry in 5 minutes."
+        )
+        display.blit(frame)
+        time.sleep(4)
+        gamepad.close()
+        return
+
+    req_mb = rel_info.get("size_mb", 960) + 500
+    free_mb = rel_info.get("free_mb", get_free_mb())
+    if free_mb < req_mb:
+        frame = renderer.draw_error(
+            "Insufficient Storage",
+            f"Need at least {req_mb} MB free ({free_mb} MB available).",
+            "Free space on SD card or choose Quick Patch [A]."
+        )
         display.blit(frame)
         time.sleep(4)
         gamepad.close()
@@ -710,6 +819,13 @@ def run_interactive_ota():
     temp_file = dest_file + ".tmp"
 
     total_size = rel_info.get("size_bytes", 0)
+
+    # Discard corrupt oversized temp file so curl -C - never fails with HTTP 416
+    if os.path.exists(temp_file) and total_size > 0 and os.path.getsize(temp_file) > total_size:
+        try:
+            os.remove(temp_file)
+        except Exception:
+            pass
 
     # Detect fastest curl binary on system
     curl_candidates = [
@@ -727,6 +843,7 @@ def run_interactive_ota():
     curl_cmd = [
         curl_bin,
         "-k",                          # Bypass certificate issues
+        "-f",                          # Fail cleanly on HTTP >= 400
         "-L",                          # Follow redirects to S3 CDN
         "-C", "-",                     # Auto-resume from existing downloaded bytes!
         "--retry", "10",
@@ -750,7 +867,15 @@ def run_interactive_ota():
         while True:
             ret = proc.poll()
             if ret is not None:
-                # Process completed
+                # If curl returned HTTP 416 range error (code 33), clear temp file and retry once fresh
+                if ret == 33 and os.path.exists(temp_file):
+                    os.remove(temp_file)
+                    curl_cmd_fresh = [c for c in curl_cmd if c not in ("-C", "-")]
+                    proc = subprocess.Popen(curl_cmd_fresh)
+                    initial_size = 0
+                    last_bytes = 0
+                    last_speed_time = time.time()
+                    continue
                 break
 
             # Check for user cancellation via B button
@@ -761,7 +886,7 @@ def run_interactive_ota():
                     proc.wait(timeout=2)
                 except Exception:
                     proc.kill()
-                # DO NOT delete temp_file so user can resume next time!
+                # Keep temp_file for resume
                 gamepad.close()
                 return
 
@@ -770,7 +895,6 @@ def run_interactive_ota():
                 last_ui_update = now
                 cur_bytes = os.path.getsize(temp_file) if os.path.exists(temp_file) else 0
 
-                # Measure delta throughput over interval
                 time_delta = max(0.1, now - last_speed_time)
                 bytes_delta = max(0, cur_bytes - last_bytes)
                 instant_speed = (bytes_delta / (1024 * 1024)) / time_delta
@@ -795,7 +919,6 @@ def run_interactive_ota():
         if proc.returncode != 0:
             raise RuntimeError(f"Download terminated with code {proc.returncode}")
 
-        # Verify completed size
         if os.path.exists(temp_file):
             final_size = os.path.getsize(temp_file)
             if total_size > 0 and final_size < int(total_size * 0.95):
@@ -814,20 +937,21 @@ def run_interactive_ota():
         return
 
     # Step 4: Show Installation Screen
-    frame = renderer.draw_installing(target_ver, 3, "Decompressing archive")
+    frame = renderer.draw_installing(target_ver, 5, "Staging update archive for reboot")
     display.blit(frame)
 
-    # Move to root for installation on reboot
+    # Instant atomic move to SD card root for _FirmwareCheck.sh on reboot
     target_root_zip = f"/mnt/SDCARD/CrossMix-OS_v{target_ver}.zip"
     try:
         if os.path.exists(dest_file):
             import shutil
-            shutil.copy2(dest_file, target_root_zip)
+            if os.path.exists(target_root_zip):
+                os.remove(target_root_zip)
+            shutil.move(dest_file, target_root_zip)
     except Exception:
         pass
 
     time.sleep(2)
-    # Trigger reboot
     subprocess.run(["sync"])
     subprocess.run(["reboot"])
 

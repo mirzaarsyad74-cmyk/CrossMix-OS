@@ -9,9 +9,15 @@ import sys
 import time
 import subprocess
 
-# Ensure access to shared SteamOS GUI framework
-sys.path.insert(0, "/mnt/SDCARD/System/usr/trimui/scripts")
-sys.path.insert(0, "System/usr/trimui/scripts")
+# Ensure access to shared libraries and SteamOS GUI framework
+for _p in (
+    "/mnt/SDCARD/System/lib/python3.11/site-packages",
+    "/mnt/SDCARD/System/lib/python3.11",
+    "/mnt/SDCARD/System/usr/trimui/scripts",
+    "System/usr/trimui/scripts",
+):
+    if os.path.exists(_p) and _p not in sys.path:
+        sys.path.insert(0, _p)
 
 from steamos_gui import (
     SteamOSRenderer, DisplayEngine, Gamepad,
@@ -42,16 +48,14 @@ def get_network_info():
 
 def test_latency():
     try:
-        # Quick 2-ping test
-        res = subprocess.run(["ping", "-c", "2", "-W", "2", "1.1.1.1"], stdout=subprocess.PIPE, text=True, timeout=4)
+        res = subprocess.run(["ping", "-c", "2", "-W", "2", "1.1.1.1"], stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True, timeout=5)
         for line in res.stdout.splitlines():
             if "avg" in line or "min/avg/max" in line:
-                # rtt min/avg/max/mdev = 12.3/14.5/16.7/1.2 ms
                 parts = line.split("=")[1].split("/")
                 return f"{float(parts[1]):.1f} ms"
     except Exception:
         pass
-    return "12.4 ms"
+    return "Offline"
 
 
 def main():

@@ -1,7 +1,7 @@
 #!/bin/sh
 # Steam Link Launcher for TrimUI Smart Pro / CrossMix-OS
-# Features: Configurable Resolution (Auto/1080/720/480/320), FPS (Auto/60/30),
-# Button Mapping (Xbox/Nintendo), Battery Saver Engine, and English UI.
+# Pure Same-Network (LAN) Steam Remote Play with Configurable Resolution, FPS,
+# Controller Mapping (Xbox/Nintendo), Sharp Mode, and Battery Saver.
 
 APP_DIR="$(cd "$(dirname "$0")" && pwd)"
 cd "$APP_DIR" || exit 1
@@ -10,16 +10,17 @@ export LD_LIBRARY_PATH="/mnt/SDCARD/System/lib:/usr/trimui/lib:$LD_LIBRARY_PATH"
 export LANG="en_US.UTF-8"
 export LC_ALL="en_US.UTF-8"
 
-# 1. Live-pull settings.conf from GitHub on every launch (silent, background-safe)
+# 1. Load persisted local user configuration (initialize default only if missing)
 SETTINGS_FILE="$APP_DIR/settings.conf"
 SETTINGS_URL="https://raw.githubusercontent.com/mirzaarsyad74-cmyk/CrossMix-OS/main/Apps/SteamLink/settings.conf"
-_NEW_CONF=$(curl -k -sf --max-time 5 "$SETTINGS_URL" 2>/dev/null)
-if [ -n "$_NEW_CONF" ]; then
-    echo "$_NEW_CONF" > "$SETTINGS_FILE"
+if [ ! -f "$SETTINGS_FILE" ]; then
+    if curl -k -fsSL --max-time 4 "$SETTINGS_URL" -o "$SETTINGS_FILE.tmp" 2>/dev/null && [ -s "$SETTINGS_FILE.tmp" ]; then
+        mv -f "$SETTINGS_FILE.tmp" "$SETTINGS_FILE"
+    else
+        rm -f "$SETTINGS_FILE.tmp"
+    fi
 fi
-unset _NEW_CONF
 
-# Load settings (live-updated or cached)
 if [ -f "$SETTINGS_FILE" ]; then
     . "$SETTINGS_FILE"
 fi
@@ -38,12 +39,6 @@ if [ "$SHARP_MODE" = "1" ]; then
 else
     export SDL_RENDER_SCALE_QUALITY=1
     export SDL_HINT_RENDER_SCALE_QUALITY=1
-fi
-
-# 1c. Trigger Turbo Network Speed Booster for zero stream latency
-BOOSTER="/mnt/SDCARD/Apps/NetworkBooster/boost.sh"
-if [ -f "$BOOSTER" ]; then
-    sh "$BOOSTER" --silent >/dev/null 2>&1 &
 fi
 
 # 2. Parse command-line override arguments
@@ -109,7 +104,8 @@ case "$RESOLUTION" in
     1080)
         TARGET_W=1920
         TARGET_H=1080
-        TARGET_BITRATE=20000
+        TARGET_BITRATE="${BITRATE_KBPS:-20000}"
+        [ "$TARGET_BITRATE" -lt 20000 ] && TARGET_BITRATE=20000
         ;;
     720)
         TARGET_W=1280
@@ -149,10 +145,9 @@ esac
 CPU_DEV="/sys/devices/system/cpu/cpu0/cpufreq"
 OLD_GOV="$(cat "$CPU_DEV/scaling_governor" 2>/dev/null)"
 OLD_MAX_FREQ="$(cat "$CPU_DEV/scaling_max_freq" 2>/dev/null)"
+CUR_BRIGHT=""
 
 if [ "$BATTERY_SAVER" = "1" ]; then
-    # In Battery Saver mode:
-    # Cap to 480p @ 30 FPS if resolution was set higher
     if [ "$TARGET_H" -gt 480 ]; then
         TARGET_W=854
         TARGET_H=480
@@ -160,26 +155,27 @@ if [ "$BATTERY_SAVER" = "1" ]; then
     TARGET_FPS=30
     [ "$TARGET_BITRATE" -gt 4000 ] && TARGET_BITRATE=3500
 
-    # Throttle CPU clock to 1008 MHz with ondemand governor (cuts SoC power by ~40%)
     echo ondemand > "$CPU_DEV/scaling_governor" 2>/dev/null
     echo 1008000 > "$CPU_DEV/scaling_max_freq" 2>/dev/null
 
-    # Disable analog stick RGB LED rings to conserve battery
     echo 0 > /sys/class/led_anim/effect_enable 2>/dev/null
 
-    # Dim backlight to 40% if higher
     if [ -w "/sys/class/backlight/backlight/brightness" ]; then
         CUR_BRIGHT="$(cat /sys/class/backlight/backlight/brightness 2>/dev/null)"
         [ "${CUR_BRIGHT:-100}" -gt 40 ] && echo 40 > /sys/class/backlight/backlight/brightness 2>/dev/null
     fi
 else
-    # High Performance mode:
-    # 1.6 GHz performance governor
     echo performance > "$CPU_DEV/scaling_governor" 2>/dev/null
     echo 1608000 > "$CPU_DEV/scaling_max_freq" 2>/dev/null
+fi
 
-    # Disable Wi-Fi power saving to avoid network latency/jitter
+# 5b. Synchronously tune Wi-Fi power_save=off and 16MB socket buffers BEFORE starting steamlink
+BOOSTER="/mnt/SDCARD/Apps/NetworkBooster/boost.sh"
+if [ -f "$BOOSTER" ]; then
+    sh "$BOOSTER" --silent >/dev/null 2>&1
+else
     command -v iw >/dev/null 2>&1 && iw dev wlan0 set power_save off 2>/dev/null
+    command -v iwconfig >/dev/null 2>&1 && iwconfig wlan0 power off 2>/dev/null
 fi
 
 # 6. Controller Mapping Setup
@@ -221,7 +217,6 @@ if [ -f "$DEV_JSON" ]; then
     PAIRED_AT=$(grep -o '"paired_at":[ ]*"[^"]*"' "$DEV_JSON" 2>/dev/null | awk -F'"' '{print $4}')
 
     if [ -n "$PAIRED_SECRET" ] && [ -n "$PAIRED_STEAMID" ] && [ "$PAIRED_STEAMID" != "0" ]; then
-        # Device is legitimately paired! Update streaming resolution/FPS/bitrate/host:
         cat <<EOF > "$DEV_JSON"
 {
   "device_id": ${PAIRED_ID:-0},
@@ -237,16 +232,14 @@ if [ -f "$DEV_JSON" ]; then
 }
 EOF
     else
-        # Incomplete / dummy pairing file - remove it so steamlink triggers 4-digit PIN pairing!
         rm -f "$DEV_JSON"
     fi
 fi
 
-# 8. Device naming & wake lock & SSL certificates
+# 8. Device naming, wake lock, & SSL certificates
 export SL_DEVICE_NAME="TrimUI Smart Pro"
 echo 1 > /tmp/stay_awake
 
-# Link SSL root certificate bundle for Steam Cloud pairing over Internet
 mkdir -p /etc/ssl/certs 2>/dev/null
 if [ -f "$APP_DIR/cacert.pem" ]; then
     cp -f "$APP_DIR/cacert.pem" /etc/ssl/ca-bundle.pem 2>/dev/null
@@ -256,7 +249,7 @@ export SSL_CERT_FILE="$APP_DIR/cacert.pem"
 
 chmod +x "$APP_DIR/steamlink" 2>/dev/null
 
-# Clean up all background framebuffer display holders and background daemons before launching exclusive SDL2 engine
+# Terminate any lingering background overlay / display / VPN processes that could bleed over or cause stutter
 pkill -9 -f tailscaled 2>/dev/null
 pkill -9 -f infoscreen 2>/dev/null
 pkill -9 -f sdl2imgshow 2>/dev/null
@@ -264,19 +257,11 @@ pkill -9 -f presenter 2>/dev/null
 pkill -9 -f pic2fb 2>/dev/null
 pkill -9 -f steam_gui 2>/dev/null
 
-# Clear framebuffer so no ghosted overlay boxes or tears remain on screen
+# Flush ALL hardware framebuffer pages (/dev/fb0) to prevent ghosted cyan boxes or screen tearing
 if [ -w "/dev/fb0" ]; then
-    dd if=/dev/zero of=/dev/fb0 bs=1024 count=3686 2>/dev/null
+    cat /dev/zero > /dev/fb0 2>/dev/null
 fi
 sleep 0.1
-
-# Network & Wi-Fi optimization for stutter-free 60 FPS streaming
-command -v iw >/dev/null 2>&1 && iw dev wlan0 set power_save off 2>/dev/null
-command -v iwconfig >/dev/null 2>&1 && iwconfig wlan0 power off 2>/dev/null
-sysctl -w net.core.rmem_max=8388608 2>/dev/null
-sysctl -w net.core.wmem_max=8388608 2>/dev/null
-sysctl -w net.ipv4.tcp_rmem="4096 87380 8388608" 2>/dev/null
-sysctl -w net.core.netdev_max_backlog=5000 2>/dev/null
 
 if [ -n "$CUSTOM_HOST" ]; then
     "$APP_DIR/steamlink" --host "$CUSTOM_HOST" > "$APP_DIR/steamlink.log" 2>&1
@@ -299,6 +284,5 @@ rm -f /tmp/stay_awake
 [ -n "$OLD_GOV" ] && echo "$OLD_GOV" > "$CPU_DEV/scaling_governor" 2>/dev/null
 [ -n "$OLD_MAX_FREQ" ] && echo "$OLD_MAX_FREQ" > "$CPU_DEV/scaling_max_freq" 2>/dev/null
 [ -n "$CUR_BRIGHT" ] && echo "$CUR_BRIGHT" > /sys/class/backlight/backlight/brightness 2>/dev/null
-# Re-enable LED animations if they were enabled
 echo 1 > /sys/class/led_anim/effect_enable 2>/dev/null
 exit 0

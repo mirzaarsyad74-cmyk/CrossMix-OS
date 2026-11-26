@@ -12,10 +12,10 @@ fi
 sync
 
 TAILSCALED="/mnt/SDCARD/System/bin/tailscaled"
-TAILSCALE="/mnt/SDCARD/System/bin/tailscaled"
-$TAILSCALE down
-pkill -9 "$TAILSCALED"
-pkill -9 "$TAILSCALE"
+TAILSCALE="/mnt/SDCARD/System/bin/tailscale"
+[ -x "$TAILSCALE" ] && $TAILSCALE down 2>/dev/null
+pkill -9 -f tailscaled 2>/dev/null
+pkill -9 -f tailscale 2>/dev/null
 
 
 # we modify the DB entries to reflect the current state

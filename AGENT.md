@@ -47,6 +47,9 @@ Therefore, **without an incremented version number, existing devices in the wild
 * **Trigger**: Automatic on pushing any tag matching `v*` (or manual `workflow_dispatch`).
 * **Artifact Limit**: The release asset `CrossMix-OS_v<VERSION>.zip` must remain **under 2.0 GiB (2,147,483,648 bytes)** to comply with GitHub's hard release asset limit.
 
+* **Binary Line-Ending Protection (`.gitattributes`)**:
+  * All ELF executables (`steamlink`, `python3.11`, `mpv`, `pic2fb`, `curl-aarch64`, `VirtualKeyboard`, etc.) and Python zipapps (`System/bin/yt-dlp.py`) MUST be marked `binary -text -eol` in `.gitattributes`. Never let `* text=auto` or `*.py text eol=lf` strip `\r\n` bytes from `yt-dlp.py` or compiled binaries.
+
 ---
 
 ## 3. Pure Steam & Cloud Streaming Architecture

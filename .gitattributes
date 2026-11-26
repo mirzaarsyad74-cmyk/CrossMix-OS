@@ -7,29 +7,35 @@
 *.json text eol=lf
 *.txt text eol=lf
 
-# Binary files
-*.png binary
-*.jpg binary
-*.jpeg binary
-*.bmp binary
-*.ico binary
-*.ttf binary
-*.so binary
-*.so.* binary
-*.7z binary
-*.7z.* binary
-*.zip binary
-*.tar binary
-*.gz binary
-*.db binary
-*.elf binary
-steamlink binary
-python3.11 binary
-yt-dlp.py binary
-VirtualKeyboard binary
-selector binary
-SimpleTerminal binary
-TermSP binary
-presenter binary
-sdl2imgshow binary
-
+# Binary files & zipapps (never alter line endings!)
+*.png binary -text -eol
+*.jpg binary -text -eol
+*.jpeg binary -text -eol
+*.bmp binary -text -eol
+*.ico binary -text -eol
+*.ttf binary -text -eol
+*.so binary -text -eol
+*.so.* binary -text -eol
+*.7z binary -text -eol
+*.7z.* binary -text -eol
+*.zip binary -text -eol
+*.tar binary -text -eol
+*.gz binary -text -eol
+*.db binary -text -eol
+*.elf binary -text -eol
+*.pyc binary -text -eol
+steamlink binary -text -eol
+python3.11 binary -text -eol
+yt-dlp.py binary -text -eol
+mpv binary -text -eol
+pic2fb binary -text -eol
+curl-aarch64 binary -text -eol
+wget binary -text -eol
+7zz binary -text -eol
+evtest binary -text -eol
+VirtualKeyboard binary -text -eol
+selector binary -text -eol
+SimpleTerminal binary -text -eol
+TermSP binary -text -eol
+presenter binary -text -eol
+sdl2imgshow binary -text -eol

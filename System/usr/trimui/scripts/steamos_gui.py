@@ -11,6 +11,15 @@ import time
 import select
 import struct
 import subprocess
+
+# Ensure access to bundled TrimUI libraries even if PYTHONPATH wasn't exported
+for _p in (
+    "/mnt/SDCARD/System/lib/python3.11/site-packages",
+    "/mnt/SDCARD/System/lib/python3.11",
+):
+    if os.path.exists(_p) and _p not in sys.path:
+        sys.path.insert(0, _p)
+
 from PIL import Image, ImageDraw, ImageFont
 
 # Screen dimensions
@@ -114,17 +123,23 @@ class Gamepad:
         # TrimUI Smart Pro joypad is at /dev/input/event3
         self.device_nodes = ["/dev/input/event3", "/dev/input/event2", "/dev/input/event1", "/dev/input/event0"]
         self.fd = None
+        self.last_poll_time = 0
+        self.debounce_sec = 0.12
+        self.reopen()
+
+    def reopen(self):
+        """Closes any existing descriptor and opens the gamepad fresh with input buffer flushed."""
+        self.close()
         for n in self.device_nodes:
             if os.path.exists(n):
                 try:
                     self.fd = os.open(n, os.O_RDONLY | os.O_NONBLOCK)
-                    # Flush any stale button presses from launcher
                     self._flush()
+                    self.last_poll_time = time.time()
                     break
                 except Exception:
+                    self.fd = None
                     continue
-        self.last_poll_time = 0
-        self.debounce_sec = 0.12
 
     def _flush(self):
         """Discards queued input events from before the application opened."""
@@ -169,7 +184,7 @@ class Gamepad:
                     if ev_code == 315: return "START"
                     if ev_code == 314: return "SELECT"
                     if ev_code == 316: return "MENU"
-                # EV_ABS (3), D-Pad HAT & Left Analog
+                # EV_ABS (3), D-Pad HAT
                 elif ev_type == 3:
                     if ev_code == 17:  # D-PAD Y
                         if ev_val == -1: self.last_poll_time = now; return "UP"
@@ -194,46 +209,44 @@ class SteamOSRenderer:
     """Generates Steam Deck / DroidDeck style 1280x720 graphical screens."""
     def __init__(self):
         self.fonts = FontResolver()
+        self._bg_cache = None
 
     def create_canvas(self):
-        img = Image.new("RGB", (SCREEN_W, SCREEN_H), COLOR_STEAM_BG_TOP)
+        if self._bg_cache is None:
+            bg = Image.new("RGB", (SCREEN_W, SCREEN_H), COLOR_STEAM_BG_TOP)
+            bg_draw = ImageDraw.Draw(bg)
+            for y in range(SCREEN_H):
+                ratio = y / float(SCREEN_H)
+                r = int(COLOR_STEAM_BG_TOP[0] * (1 - ratio) + COLOR_STEAM_BG_BOTTOM[0] * ratio)
+                g = int(COLOR_STEAM_BG_TOP[1] * (1 - ratio) + COLOR_STEAM_BG_BOTTOM[1] * ratio)
+                b = int(COLOR_STEAM_BG_TOP[2] * (1 - ratio) + COLOR_STEAM_BG_BOTTOM[2] * ratio)
+                bg_draw.line([(0, y), (SCREEN_W, y)], fill=(r, g, b))
+            self._bg_cache = bg
+        img = self._bg_cache.copy()
         draw = ImageDraw.Draw(img)
-        # Vertical Steam Deck slate gradient
-        for y in range(SCREEN_H):
-            ratio = y / float(SCREEN_H)
-            r = int(COLOR_STEAM_BG_TOP[0] * (1 - ratio) + COLOR_STEAM_BG_BOTTOM[0] * ratio)
-            g = int(COLOR_STEAM_BG_TOP[1] * (1 - ratio) + COLOR_STEAM_BG_BOTTOM[1] * ratio)
-            b = int(COLOR_STEAM_BG_TOP[2] * (1 - ratio) + COLOR_STEAM_BG_BOTTOM[2] * ratio)
-            draw.line([(0, y), (SCREEN_W, y)], fill=(r, g, b))
         return img, draw
 
     def draw_top_bar(self, draw, title="STEAM DECK", subtitle=""):
         """Draws official Steam Deck Top Bar: Steam Deck logo, view title, clock, battery, wifi."""
-        # Horizontal subtle divider line
         draw.line([(0, 60), (SCREEN_W, 60)], fill=COLOR_CARD_BORDER, width=1)
         draw.line([(30, 60), (320, 60)], fill=COLOR_CYAN_FOCUS, width=2)
 
-        # Steam Deck circular logo glyph
         cx, cy = 52, 30
         draw.ellipse([cx - 14, cy - 14, cx + 14, cy + 14], outline=COLOR_CYAN_FOCUS, width=2)
         draw.ellipse([cx - 5, cy - 5, cx + 5, cy + 5], fill=COLOR_CYAN_FOCUS)
 
-        # Title
         font_brand = self.fonts.get(20, bold=True)
-        draw.text((80, 20), "STEAM", font=font_brand, fill=COLOR_TEXT_PRIMARY)
+        draw.text((80, 20), title, font=font_brand, fill=COLOR_TEXT_PRIMARY)
         if subtitle:
             font_sub = self.fonts.get(14, bold=False)
-            draw.text((155, 23), f"// {subtitle}", font=font_sub, fill=COLOR_CYAN_FOCUS)
+            title_w = int(draw.textlength(title, font=font_brand))
+            draw.text((95 + title_w, 23), f"// {subtitle}", font=font_sub, fill=COLOR_CYAN_FOCUS)
 
-        # Right status cluster: Wi-Fi, Battery, Clock
         font_status = self.fonts.get(13, bold=True)
         cur_time = time.strftime("%I:%M %p")
-        
-        # Wi-Fi icon dot
+
         draw.ellipse([1080, 26, 1090, 36], fill=COLOR_GREEN_ACCENT)
         draw.text((1100, 22), "WI-FI", font=font_status, fill=COLOR_TEXT_SECONDARY)
-
-        # Clock
         draw.text((1170, 22), cur_time, font=font_status, fill=COLOR_TEXT_PRIMARY)
 
     def draw_bottom_bar(self, draw, buttons):
@@ -253,11 +266,11 @@ class SteamOSRenderer:
             border_col = COLOR_CYAN_FOCUS if primary else (40, 52, 70)
             draw.rounded_rectangle([x, y, x + pill_w, y + pill_h], radius=15, fill=bg_col, outline=border_col, width=1)
 
-            # Circle glyph
             c_fill = COLOR_CYAN_FOCUS if primary else (60, 75, 95)
             c_text = (10, 15, 25) if primary else COLOR_TEXT_PRIMARY
             draw.ellipse([x + 5, y + 4, x + 25, y + 24], fill=c_fill)
-            draw.text((x + 10, y + 5), btn, font=font_glyph, fill=c_text)
+            btn_w = int(draw.textlength(btn, font=font_glyph))
+            draw.text((x + 15 - btn_w // 2, y + 5), btn, font=font_glyph, fill=c_text)
 
             draw.text((x + 31, y + 7), label, font=font_lbl, fill=COLOR_TEXT_PRIMARY)
             x += pill_w + 16
@@ -266,8 +279,7 @@ class SteamOSRenderer:
         """Renders an interactive Steam Deck menu with glowing cyan focus."""
         item_h = 62
         visible_count = min(len(items), h // (item_h + 8))
-        
-        # Scroll offset calculation
+
         start_idx = 0
         if selected_idx >= visible_count:
             start_idx = selected_idx - visible_count + 1
@@ -279,9 +291,7 @@ class SteamOSRenderer:
 
             card_box = [x, draw_y, x + w, draw_y + item_h]
             if is_sel:
-                # Glowing Steam Deck Cyan Card Focus
                 draw.rounded_rectangle(card_box, radius=12, fill=COLOR_CARD_SELECTED, outline=COLOR_CYAN_FOCUS, width=2)
-                # Left focus indicator pill
                 draw.rounded_rectangle([x + 4, draw_y + 12, x + 10, draw_y + item_h - 12], radius=3, fill=COLOR_CYAN_FOCUS)
                 title_col = COLOR_TEXT_PRIMARY
                 desc_col = COLOR_CYAN_GLOW
@@ -290,13 +300,11 @@ class SteamOSRenderer:
                 title_col = COLOR_TEXT_PRIMARY
                 desc_col = COLOR_TEXT_SECONDARY
 
-            # Text inside item
             font_title = self.fonts.get(18, bold=True)
             font_desc = self.fonts.get(13, bold=False)
             draw.text((x + 28, draw_y + 11), title, font=font_title, fill=title_col)
             draw.text((x + 28, draw_y + 35), desc, font=font_desc, fill=desc_col)
 
-            # Badge on right
             if badge:
                 font_badge = self.fonts.get(12, bold=True)
                 bw = int(draw.textlength(badge, font=font_badge)) + 18
@@ -307,4 +315,3 @@ class SteamOSRenderer:
                 draw.text((bx + 9, by + 5), badge, font=font_badge, fill=COLOR_TEXT_PRIMARY)
 
             draw_y += item_h + 8
-

@@ -14,9 +14,15 @@ if not os.path.exists(FRAME_DIR):
     FRAME_DIR = "System/usr/trimui/res/boot_anim"
 
 PIC2FB = "/mnt/SDCARD/System/bin/pic2fb"
+if os.path.exists(PIC2FB):
+    try:
+        os.chmod(PIC2FB, 0o755)
+    except Exception:
+        pass
 HAS_PIC2FB = os.path.exists(PIC2FB) and os.access(PIC2FB, os.X_OK)
 FB0 = "/dev/fb0"
 HAS_FB0 = os.path.exists(FB0)
+
 
 def main():
     if not os.path.exists(FRAME_DIR):
@@ -39,9 +45,9 @@ def main():
                 pass
         time.sleep(0.06)
 
-    # Hold final frame for 0.4s
+    # Hold final frame briefly before MainUI handoff
     time.sleep(0.4)
+
 
 if __name__ == "__main__":
     main()
-
